@@ -20,13 +20,18 @@
 | Winston | 3.x | 日志管理 |
 | dotenv | 16.x | 环境变量管理 |
 | CORS | 2.x | 跨域支持 |
+| PM2 | - | 进程管理（生产环境） |
 
 ## 项目结构
 
 ```
 web_api/
+├── .github/                     # GitHub配置
+│   └── workflows/               # GitHub Actions工作流
+│       └── deploy.yml           # 自动部署配置
 ├── docs/                        # 文档目录
-│   └── API.md                   # API接口文档
+│   ├── API.md                   # API接口文档
+│   └── DEPLOY.md                # 部署指南
 ├── logs/                        # 日志目录（自动生成）
 │   ├── error.log                # 错误日志
 │   └── combined.log             # 综合日志
@@ -53,6 +58,7 @@ web_api/
 ├── uploads/                     # 上传文件目录（OTA固件）
 ├── .env                         # 环境变量配置
 ├── .gitignore                   # Git忽略配置
+├── ecosystem.config.js          # PM2配置文件
 ├── package.json                 # 项目配置
 └── README.md                    # 项目说明
 ```
@@ -83,6 +89,9 @@ npm run dev
 
 # 生产模式
 npm start
+
+# 使用PM2启动（生产环境推荐）
+npm run pm2:start
 ```
 
 ### 4. 测试接口
@@ -118,6 +127,34 @@ curl http://localhost:3000/api/system/info
 | GET | /api/ota/check/:deviceId | 检查更新 |
 
 详细API文档请查看 [API文档](docs/API.md)
+
+## 部署
+
+### 自动部署（推荐）
+
+本项目配置了 GitHub Actions 自动部署，推送到 main 分支会自动部署到服务器。
+
+详细配置步骤请查看 [部署指南](docs/DEPLOY.md)
+
+### 手动部署
+
+```bash
+# 在服务器上
+git clone https://github.com/你的用户名/web_api.git
+cd web_api
+npm install --production
+npm run pm2:start
+```
+
+### PM2 常用命令
+
+```bash
+npm run pm2:start    # 启动应用
+npm run pm2:stop     # 停止应用
+npm run pm2:restart  # 重启应用
+npm run pm2:logs     # 查看日志
+npm run pm2:monit    # 监控面板
+```
 
 ## 架构说明
 
@@ -200,6 +237,12 @@ logger.debug('调试信息');
 ### Q: 如何添加新的API模块？
 
 参考现有的 `system` 模块结构，创建对应的控制器和路由文件。
+
+## 文档目录
+
+- [API接口文档](docs/API.md)
+- [部署指南](docs/DEPLOY.md)
+- [项目开发规范](.trae/rules/project_rules.md)
 
 ## 后续计划
 

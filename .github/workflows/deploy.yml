@@ -1,0 +1,75 @@
+# GitHub Actions 自动部署工作流
+# 
+# 什么是 GitHub Actions？
+# - GitHub 提供的持续集成/持续部署(CI/CD)服务
+# - 当你推送代码到 GitHub 时，会自动执行定义好的任务
+# - 可以用来自动测试、构建、部署项目
+#
+# 工作流程：
+# 1. 本地推送代码到 GitHub
+# 2. GitHub 检测到 push 事件
+# 3. 自动运行这个工作流
+# 4. 通过 SSH 连接到服务器
+# 5. 在服务器上拉取最新代码并重启服务
+
+# 工作流名称
+name: Deploy to Server
+
+# 触发条件：什么时候运行这个工作流
+on:
+  # 当推送到 main 分支时触发
+  push:
+    branches:
+      - main
+  # 允许手动触发（方便调试）
+  workflow_dispatch:
+
+# 工作流中的任务
+jobs:
+  # 任务名称：部署
+  deploy:
+    # 运行环境：使用最新的 Ubuntu 系统
+    runs-on: ubuntu-latest
+    
+    # 任务步骤
+    steps:
+      # 步骤1：检出代码
+      # 把你的代码下载到运行环境中
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 步骤2：部署到服务器
+      # 通过 SSH 连接到服务器并执行部署脚本
+      - name: Deploy to server
+        # 使用第三方提供的 SSH Action
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          # 服务器地址（从 GitHub Secrets 获取）
+          host: ${{ secrets.SERVER_HOST }}
+          # 服务器用户名
+          username: ${{ secrets.SERVER_USER }}
+          # SSH 私钥（用于身份验证）
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # SSH 端口，默认22
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          # 在服务器上执行的脚本
+          script: |
+            echo "开始部署..."
+            
+            # 进入项目目录（修改为你的实际路径）
+            cd ${{ secrets.PROJECT_PATH }}
+            
+            # 拉取最新代码
+            git pull origin main
+            
+            # 安装/更新依赖
+            npm install --production
+            
+            # 使用 PM2 重启应用
+            # --update-env 表示更新环境变量
+            pm2 restart web-api || pm2 start ecosystem.config.js
+            
+            # 保存 PM2 配置（服务器重启后自动恢复）
+            pm2 save
+            
+            echo "部署完成！"
