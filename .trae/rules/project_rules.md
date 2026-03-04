@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # 项目开发规范
 
 本文档记录了项目的开发要求和规范，请在每次开发新功能前阅读并遵循。
@@ -52,6 +56,7 @@ const functionName = (param) => {
    - `src/middlewares/README.md`
    - `src/controllers/README.md`
    - `src/routes/README.md`
+   - `src/models/README.md`
 
 2. **API 文档**：`docs/API.md`
    - 添加新接口说明
@@ -97,11 +102,11 @@ web_api/
 
 ### 添加新功能模块的步骤
 
-1. 创建控制器 `src/controllers/xxx.controller.js`
-2. 创建路由 `src/routes/xxx.routes.js`
-3. 在 `src/routes/index.js` 注册路由
-4. 创建服务层 `src/services/xxx.service.js`（如需要）
-5. 创建模型 `src/models/xxx.js`（如需要）
+1. 创建数据模型 `src/models/xxx.model.js`
+2. 创建控制器 `src/controllers/xxx.controller.js`
+3. 创建路由 `src/routes/xxx.routes.js`
+4. 在 `src/routes/index.js` 注册路由
+5. 创建服务层 `src/services/xxx.service.js`（如需要）
 6. 添加代码注释
 7. 更新模块 README.md
 8. 更新 API 文档
@@ -138,6 +143,98 @@ logger.info('一般信息');
 logger.warn('警告信息');
 logger.error('错误信息');
 logger.debug('调试信息');
+```
+
+---
+
+## 数据库规范
+
+### 数据库配置
+
+在 `.env` 文件中配置：
+
+```env
+# MySQL 配置
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=web_api
+
+# 安全配置
+JWT_SECRET=your-super-secret-key
+JWT_EXPIRES_IN=604800
+BCRYPT_SALT_ROUNDS=10
+```
+
+### 数据库初始化
+
+```bash
+npm run db:init
+```
+
+### 数据库操作
+
+```javascript
+const db = require('./models/database');
+
+// 查询
+const rows = await db.query('SELECT * FROM user WHERE status = ?', [1]);
+
+// 插入
+const id = await db.insert('INSERT INTO user (username, password) VALUES (?, ?)', ['admin', 'hashed_password']);
+
+// 更新
+const affected = await db.update('UPDATE user SET status = ? WHERE id = ?', [0, 1]);
+```
+
+### 模型使用
+
+```javascript
+const { User, InviteCode, UserProfile, UserAuth } = require('./models');
+
+// 用户操作
+const userId = await User.create({ username: 'test', password: '123456' });
+const user = await User.findById(1);
+await User.update(1, { nickname: '新昵称' });
+
+// 邀请码操作
+const code = await InviteCode.create();
+const isValid = await InviteCode.isValid(code.code);
+await InviteCode.use(code.code, userId);
+
+// 用户资料
+await UserProfile.create(userId);
+await UserProfile.update(userId, { signature: '签名' });
+
+// 用户权限
+await UserAuth.create(userId);
+await UserAuth.addPoints(userId, 10);
+```
+
+### 数据库设计原则
+
+1. 使用 utf8mb4 字符集
+2. 使用 InnoDB 存储引擎
+3. 添加适当的索引
+4. 使用外键约束保证数据一致性
+5. 自动维护 create_time 和 update_time
+6. 所有字段必须有注释
+
+---
+
+## 用户注册流程
+
+```
+1. 验证邀请码有效
+   ↓
+2. 插入 user 表（创建用户）
+   ↓
+3. 自动插入 user_profile（空值）
+   ↓
+4. 自动插入 user_auth（默认值）
+   ↓
+5. 标记邀请码为已使用
 ```
 
 ---
@@ -179,6 +276,14 @@ npm run pm2:monit
 PORT=3000
 NODE_ENV=production
 LOG_LEVEL=info
+
+DB_HOST=your-db-host
+DB_PORT=3306
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_NAME=web_api
+
+JWT_SECRET=your-production-secret-key
 ```
 
 ---
@@ -187,7 +292,9 @@ LOG_LEVEL=info
 
 - Node.js v22.19.0
 - Express 4.x
+- MySQL 8.x
 - Winston（日志）
+- bcryptjs（密码加密）
 - dotenv（环境变量）
 - PM2（进程管理）
 
@@ -197,6 +304,7 @@ LOG_LEVEL=info
 
 这是一个用于对接嵌入式设备和个人网站的后端API服务，主要功能：
 
+- 用户注册与登录（邀请码机制）
 - 设备管理与监控
 - OTA 固件升级
 - 设备时间同步
@@ -212,3 +320,5 @@ LOG_LEVEL=info
 4. 保持代码风格一致
 5. 敏感信息不要硬编码，使用环境变量
 6. 生产环境使用 PM2 管理进程
+7. 数据库操作使用连接池，避免频繁创建连接
+8. 密码必须使用 bcrypt 加密存储
