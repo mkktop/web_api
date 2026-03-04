@@ -23,11 +23,17 @@
 **当前路由结构：**
 ```
 /api
-├── /system          # 系统相关
-│   ├── GET /time    # 获取时间
-│   └── GET /info    # 获取系统信息
-├── /device          # 设备相关（待实现）
-└── /ota             # OTA升级（待实现）
+├── /system               # 系统相关
+│   ├── GET /time         # 获取时间
+│   └── GET /info         # 获取系统信息
+├── /invite-codes         # 邀请码管理（仅管理员，RESTful风格）
+│   ├── POST /            # 创建邀请码（批量生成）
+│   ├── GET /             # 查询邀请码列表
+│   ├── GET /stats        # 获取邀请码统计
+│   ├── DELETE /:id       # 删除邀请码
+│   └── POST /cleanup     # 清理过期邀请码
+├── /device               # 设备相关（待实现）
+└── /ota                  # OTA升级（待实现）
 ```
 
 **使用示例：**
@@ -53,6 +59,36 @@ app.use('/api', routes);
 **完整URL：**
 - `GET /api/system/time`
 - `GET /api/system/info`
+
+### invite_code.routes.js - 邀请码管理路由
+
+定义邀请码管理相关的API路由（RESTful风格），所有接口仅限管理员访问。
+
+**路由列表：**
+
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| POST | / | inviteCodeController.generate | 创建邀请码（批量生成） |
+| GET | / | inviteCodeController.list | 查询邀请码列表 |
+| GET | /stats | inviteCodeController.stats | 获取邀请码统计 |
+| DELETE | /:id | inviteCodeController.remove | 删除邀请码 |
+| POST | /cleanup | inviteCodeController.cleanup | 清理过期邀请码 |
+
+**完整URL：**
+- `POST /api/invite-codes`
+- `GET /api/invite-codes`
+- `GET /api/invite-codes/stats`
+- `DELETE /api/invite-codes/:id`
+- `POST /api/invite-codes/cleanup`
+
+**RESTful设计说明：**
+- 资源命名使用复数形式 `invite-codes`
+- POST 用于创建资源
+- GET 用于获取资源
+- DELETE 用于删除资源
+- 特殊操作（stats、cleanup）作为子资源
+
+---
 
 ## 路由定义方式
 

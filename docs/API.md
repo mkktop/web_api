@@ -425,6 +425,314 @@ GET /api/system/info
 
 ---
 
+## 邀请码管理接口
+
+> **权限说明**：所有邀请码管理接口仅限 admin 角色访问，需要携带有效的 JWT Token。
+
+### 1. 创建邀请码（批量生成）
+
+管理员批量生成邀请码，支持指定长度和数量。
+
+**请求**
+
+```
+POST /api/invite-codes
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| count | number | 否 | 生成数量（1-100，默认10） |
+| length | number | 否 | 邀请码长度（8-32位，默认32） |
+
+**请求示例**
+
+```json
+{
+  "count": 10,
+  "length": 16
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "生成成功",
+  "data": {
+    "count": 10,
+    "list": [
+      { "id": 1, "code": "a1b2c3d4e5f6g7h8" },
+      { "id": 2, "code": "i9j0k1l2m3n4o5p6" }
+    ]
+  }
+}
+```
+
+**失败响应**
+
+| success | message | 说明 |
+|---------|---------|------|
+| false | 生成数量必须在 1-100 之间 | 参数范围错误 |
+| false | 邀请码长度必须在 8-32 位之间 | 参数范围错误 |
+| false | 未登录或 Token 过期 | Token无效 |
+| false | 权限不足 | 非管理员 |
+
+**调用示例**
+
+```bash
+# curl
+curl -X POST http://localhost:3000/api/invite-codes \
+  -H "Authorization: Bearer your_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"count":10,"length":16}'
+
+# PowerShell
+$headers = @{
+  Authorization = "Bearer your_token_here"
+}
+$body = @{
+  count = 10
+  length = 16
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:3000/api/invite-codes -Method POST -Headers $headers -Body $body -ContentType "application/json"
+```
+
+---
+
+### 2. 查询邀请码列表
+
+管理员查询邀请码列表，支持筛选和分页。
+
+**请求**
+
+```
+GET /api/invite-codes?page=1&pageSize=10&used=0
+Authorization: Bearer {token}
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码（默认1） |
+| pageSize | number | 否 | 每页数量（默认20，最大100） |
+| code | string | 否 | 按邀请码模糊搜索 |
+| used | number | 否 | 按使用状态筛选（0未使用/1已使用） |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "code": "a1b2c3d4e5f6g7h8",
+        "used": 0,
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "use_time": null,
+        "user_id": null,
+        "username": null
+      },
+      {
+        "id": 2,
+        "code": "i9j0k1l2m3n4o5p6",
+        "used": 1,
+        "create_time": "2024-01-14T09:20:30.000Z",
+        "use_time": "2024-01-15T08:00:00.000Z",
+        "user_id": 5,
+        "username": "testuser"
+      }
+    ],
+    "pagination": {
+      "total": 100,
+      "page": 1,
+      "pageSize": 10,
+      "totalPages": 10
+    }
+  }
+}
+```
+
+**调用示例**
+
+```bash
+# curl
+curl "http://localhost:3000/api/invite-codes?page=1&pageSize=10&used=0" \
+  -H "Authorization: Bearer your_token_here"
+
+# PowerShell
+$headers = @{
+  Authorization = "Bearer your_token_here"
+}
+
+Invoke-RestMethod -Uri "http://localhost:3000/api/invite-codes?page=1&pageSize=10&used=0" -Headers $headers
+```
+
+---
+
+### 3. 获取邀请码统计
+
+获取邀请码的总数、已使用、未使用数量。
+
+**请求**
+
+```
+GET /api/invite-codes/stats
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "total": 100,
+    "used": 30,
+    "unused": 70
+  }
+}
+```
+
+**调用示例**
+
+```bash
+# curl
+curl http://localhost:3000/api/invite-codes/stats \
+  -H "Authorization: Bearer your_token_here"
+
+# PowerShell
+$headers = @{
+  Authorization = "Bearer your_token_here"
+}
+
+Invoke-RestMethod -Uri http://localhost:3000/api/invite-codes/stats -Headers $headers
+```
+
+---
+
+### 4. 删除邀请码
+
+删除未使用的邀请码（已使用的不能删除）。
+
+**请求**
+
+```
+DELETE /api/invite-codes/{id}
+Authorization: Bearer {token}
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 邀请码ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "删除成功",
+  "data": {}
+}
+```
+
+**失败响应**
+
+| success | message | 说明 |
+|---------|---------|------|
+| false | 邀请码ID不能为空 | 参数缺失 |
+| false | 邀请码不存在 | 邀请码不存在 |
+| false | 该邀请码已使用，无法删除 | 邀请码已使用 |
+
+**调用示例**
+
+```bash
+# curl
+curl -X DELETE http://localhost:3000/api/invite-codes/123 \
+  -H "Authorization: Bearer your_token_here"
+
+# PowerShell
+$headers = @{
+  Authorization = "Bearer your_token_here"
+}
+
+Invoke-RestMethod -Uri http://localhost:3000/api/invite-codes/123 -Method DELETE -Headers $headers
+```
+
+---
+
+### 5. 清理过期邀请码
+
+删除超过指定天数未使用的邀请码。
+
+**请求**
+
+```
+POST /api/invite-codes/cleanup
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| days | number | 否 | 过期天数（1-365，默认30） |
+
+**请求示例**
+
+```json
+{
+  "days": 30
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "清理完成",
+  "data": {
+    "deleted": 5
+  }
+}
+```
+
+**调用示例**
+
+```bash
+# curl
+curl -X POST http://localhost:3000/api/invite-codes/cleanup \
+  -H "Authorization: Bearer your_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"days":30}'
+
+# PowerShell
+$headers = @{
+  Authorization = "Bearer your_token_here"
+}
+$body = @{
+  days = 30
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:3000/api/invite-codes/cleanup -Method POST -Headers $headers -Body $body -ContentType "application/json"
+```
+
+---
+
 ## 错误码说明
 
 | HTTP状态码 | 说明 |

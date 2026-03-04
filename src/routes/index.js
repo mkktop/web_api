@@ -31,6 +31,7 @@ const router = express.Router();
 // 每个模块有自己的路由文件，便于管理和维护
 const systemRoutes = require('./system.routes');
 const authRoutes = require('./auth.routes');
+const inviteCodeRoutes = require('./invite_code.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -55,6 +56,9 @@ router.use('/', authRoutes);
 
 // 系统相关路由，前缀为 /system
 router.use('/system', systemRoutes);
+
+// 邀请码管理路由，前缀为 /invite-codes（RESTful风格，使用复数）
+router.use('/invite-codes', inviteCodeRoutes);
 
 // 设备相关路由（待实现）
 // router.use('/device', deviceRoutes);

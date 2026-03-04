@@ -4,7 +4,7 @@
  * 
  * 表结构说明：
  * - id: 自增主键
- * - code: 邀请码（32位随机字符串）
+ * - code: 邀请码（可配置长度，默认32位）
  * - used: 状态（0 未使用 / 1 已使用）
  * - user_id: 绑定的用户ID
  * - create_time: 创建时间
@@ -14,6 +14,7 @@
  * - 用户注册必须使用有效的邀请码
  * - 邀请码只能使用一次
  * - 使用后绑定到对应用户
+ * - 管理员可批量生成邀请码
  * 
  * 使用场景：
  * - 控制用户注册
@@ -41,33 +42,16 @@ const InviteCode = {
   createTable: async () => {
     const sql = `
       CREATE TABLE IF NOT EXISTS invite_code (
-        -- 邀请码 ID（主键）
         id INT NOT NULL AUTO_INCREMENT COMMENT '邀请码ID（主键）',
-        
-        -- 邀请码（32位随机字符串）
-        code VARCHAR(32) NOT NULL COMMENT '邀请码（32位随机字符串）',
-        
-        -- 状态：0 未使用 1 已使用
+        code VARCHAR(32) NOT NULL COMMENT '邀请码',
         used TINYINT DEFAULT 0 COMMENT '状态：0未使用 1已使用',
-        
-        -- 绑定的用户 ID
         user_id INT DEFAULT NULL COMMENT '绑定的用户ID',
-        
-        -- 创建时间
         create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-        
-        -- 使用时间
         use_time DATETIME DEFAULT NULL COMMENT '使用时间',
-        
-        -- 主键
         PRIMARY KEY (id),
-        
-        -- 唯一索引：邀请码唯一
         UNIQUE KEY code (code),
-        
-        -- 索引：用户ID
-        KEY user_id (user_id)
-        
+        KEY user_id (user_id),
+        KEY used (used)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请码表';
     `;
     await db.query(sql);
@@ -75,38 +59,43 @@ const InviteCode = {
 
   /**
    * 生成随机邀请码
-   * @description 生成一个32位的随机字符串作为邀请码
+   * @description 生成指定长度的随机字符串作为邀请码
    * 
-   * @returns {string} 32位随机邀请码
+   * @param {number} length - 邀请码长度（8-32位，默认32）
+   * @returns {string} 随机邀请码
    * 
    * @example
-   * const code = InviteCode.generateCode();
-   * console.log(code);  // 例如：'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+   * const code = InviteCode.generateCode(16);
+   * console.log(code);  // 例如：'a1b2c3d4e5f6g7h8'
    */
-  generateCode: () => {
-    // 使用 crypto.randomBytes 生成安全的随机字节
-    // 16 字节 = 32 个十六进制字符
-    return crypto.randomBytes(16).toString('hex');
+  generateCode: (length = 32) => {
+    // 限制长度范围：最小8位，最大32位
+    const len = Math.max(8, Math.min(32, length));
+    // 计算需要的字节数（每个字节转2个十六进制字符）
+    const bytes = Math.ceil(len / 2);
+    // 生成随机字节并转换为十六进制字符串
+    return crypto.randomBytes(bytes).toString('hex').substring(0, len);
   },
 
   /**
-   * 创建新邀请码
+   * 创建单个邀请码
    * @description 生成并插入一条新的邀请码记录
    * 
-   * @param {string} code - 自定义邀请码（可选，不传则自动生成）
+   * @param {Object} options - 配置选项
+   * @param {number} options.length - 邀请码长度（8-32位，默认32）
+   * @param {string} options.code - 自定义邀请码（可选）
    * @returns {Promise<Object>} 包含 id 和 code 的对象
    * 
    * @example
-   * // 自动生成邀请码
+   * // 自动生成32位邀请码
    * const result = await InviteCode.create();
-   * console.log(result.code);  // 邀请码字符串
    * 
-   * // 使用自定义邀请码
-   * const result = await InviteCode.create('CUSTOM_CODE_123');
+   * // 生成16位邀请码
+   * const result = await InviteCode.create({ length: 16 });
    */
-  create: async (code = null) => {
-    // 如果没有传入邀请码，则自动生成
-    const inviteCode = code || InviteCode.generateCode();
+  create: async (options = {}) => {
+    const { length = 32, code: customCode } = options;
+    const inviteCode = customCode || InviteCode.generateCode(length);
     
     const sql = 'INSERT INTO invite_code (code) VALUES (?)';
     const id = await db.insert(sql, [inviteCode]);
@@ -116,28 +105,41 @@ const InviteCode = {
 
   /**
    * 批量创建邀请码
-   * @description 一次性生成多个邀请码
+   * @description 一次性生成多个邀请码（管理员专用）
    * 
-   * @param {number} count - 要生成的数量
-   * @returns {Promise<Array>} 邀请码数组
+   * @param {Object} options - 配置选项
+   * @param {number} options.count - 生成数量（1-100，默认10）
+   * @param {number} options.length - 邀请码长度（8-32位，默认32）
+   * @returns {Promise<Array>} 邀请码对象数组
    * 
    * @example
-   * const codes = await InviteCode.createBatch(10);
-   * console.log(codes);  // ['code1', 'code2', ...]
+   * // 批量生成10个16位邀请码
+   * const codes = await InviteCode.createBatch({ count: 10, length: 16 });
+   * console.log(codes);
+   * // [{ id: 1, code: 'abc123...' }, { id: 2, code: 'def456...' }, ...]
    */
-  createBatch: async (count) => {
-    const codes = [];
-    const sql = 'INSERT INTO invite_code (code) VALUES ?';
-    const values = [];
+  createBatch: async (options = {}) => {
+    const { count = 10, length = 32 } = options;
     
-    for (let i = 0; i < count; i++) {
-      const code = InviteCode.generateCode();
+    // 限制数量范围：最小1个，最大100个
+    const actualCount = Math.max(1, Math.min(100, count));
+    // 限制长度范围：最小8位，最大32位
+    const actualLength = Math.max(8, Math.min(32, length));
+    
+    const codes = [];
+    const results = [];
+    
+    // 逐个插入邀请码
+    for (let i = 0; i < actualCount; i++) {
+      const code = InviteCode.generateCode(actualLength);
       codes.push(code);
-      values.push([code]);
+      
+      const sql = 'INSERT INTO invite_code (code) VALUES (?)';
+      const id = await db.insert(sql, [code]);
+      results.push({ id, code });
     }
     
-    await db.query(sql, [values]);
-    return codes;
+    return results;
   },
 
   /**
@@ -146,9 +148,6 @@ const InviteCode = {
    * 
    * @param {string} code - 邀请码
    * @returns {Promise<Object|null>} 邀请码记录，不存在则返回 null
-   * 
-   * @example
-   * const invite = await InviteCode.findByCode('abc123...');
    */
   findByCode: async (code) => {
     const sql = 'SELECT * FROM invite_code WHERE code = ?';
@@ -175,12 +174,6 @@ const InviteCode = {
    * 
    * @param {string} code - 邀请码
    * @returns {Promise<boolean>} 是否有效
-   * 
-   * @example
-   * const isValid = await InviteCode.isValid('abc123...');
-   * if (isValid) {
-   *   // 允许注册
-   * }
    */
   isValid: async (code) => {
     const sql = 'SELECT 1 FROM invite_code WHERE code = ? AND used = 0 LIMIT 1';
@@ -195,12 +188,6 @@ const InviteCode = {
    * @param {string} code - 邀请码
    * @param {number} userId - 用户ID
    * @returns {Promise<number>} 影响的行数
-   * 
-   * @example
-   * const affected = await InviteCode.use('abc123...', 1);
-   * if (affected > 0) {
-   *   console.log('邀请码使用成功');
-   * }
    */
   use: async (code, userId) => {
     const sql = `
@@ -214,63 +201,87 @@ const InviteCode = {
   },
 
   /**
-   * 查找所有邀请码
-   * @description 获取邀请码列表（分页）
+   * 查询邀请码列表
+   * @description 获取邀请码列表，支持筛选和分页（管理员专用）
    * 
    * @param {Object} options - 查询选项
-   * @param {number} options.limit - 返回数量限制
-   * @param {number} options.offset - 偏移量
-   * @param {number} options.used - 按使用状态筛选
-   * @returns {Promise<Array>} 邀请码数组
+   * @param {number} options.page - 页码（默认1）
+   * @param {number} options.pageSize - 每页数量（默认20）
+   * @param {string} options.code - 按邀请码模糊搜索
+   * @param {number} options.used - 按使用状态筛选（0未使用/1已使用）
+   * @returns {Promise<Object>} 包含列表和分页信息的对象
    */
   findAll: async (options = {}) => {
-    let sql = `
-      SELECT ic.*, u.username 
+    const { page = 1, pageSize = 20, code, used } = options;
+    const offset = (page - 1) * pageSize;
+    
+    // 构建查询条件
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+    
+    // 按邀请码模糊搜索
+    if (code) {
+      whereClause += ' AND ic.code LIKE ?';
+      params.push(`%${code}%`);
+    }
+    
+    // 按使用状态筛选
+    if (used !== undefined && used !== null && used !== '') {
+      whereClause += ' AND ic.used = ?';
+      params.push(parseInt(used));
+    }
+    
+    // 查询总数
+    const countSql = `
+      SELECT COUNT(*) as total 
+      FROM invite_code ic 
+      ${whereClause}
+    `;
+    const countRows = await db.query(countSql, params);
+    const total = countRows[0].total;
+    
+    // 查询列表（LIMIT 和 OFFSET 直接拼接到 SQL 中，避免参数类型问题）
+    const listSql = `
+      SELECT 
+        ic.id,
+        ic.code,
+        ic.used,
+        ic.create_time,
+        ic.use_time,
+        u.id as user_id,
+        u.username as username
       FROM invite_code ic 
       LEFT JOIN user u ON ic.user_id = u.id 
-      WHERE 1=1
+      ${whereClause}
+      ORDER BY ic.create_time DESC
+      LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}
     `;
-    const params = [];
-
-    // 按使用状态筛选
-    if (options.used !== undefined) {
-      sql += ' AND ic.used = ?';
-      params.push(options.used);
-    }
-
-    // 排序：按创建时间倒序
-    sql += ' ORDER BY ic.create_time DESC';
-
-    // 分页
-    if (options.limit) {
-      sql += ' LIMIT ?';
-      params.push(options.limit);
-      if (options.offset) {
-        sql += ' OFFSET ?';
-        params.push(options.offset);
+    const list = await db.query(listSql, params);
+    
+    return {
+      list,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
       }
-    }
-
-    return await db.query(sql, params);
+    };
   },
 
   /**
    * 统计邀请码数量
-   * @description 统计符合条件的邀请码数量
+   * @description 统计邀请码的总数、已使用、未使用数量
    * 
-   * @param {Object} options - 筛选选项
-   * @returns {Promise<Object>} 包含总数、已使用、未使用的统计
+   * @returns {Promise<Object>} 统计结果
    */
-  count: async (options = {}) => {
-    // 获取总数
+  count: async () => {
     const totalSql = 'SELECT COUNT(*) as count FROM invite_code';
     const totalRows = await db.query(totalSql);
     
-    // 获取已使用数量
     const usedSql = 'SELECT COUNT(*) as count FROM invite_code WHERE used = 1';
     const usedRows = await db.query(usedSql);
     
-    // 获取未使用数量
     const unusedSql = 'SELECT COUNT(*) as count FROM invite_code WHERE used = 0';
     const unusedRows = await db.query(unusedSql);
     
@@ -283,13 +294,13 @@ const InviteCode = {
 
   /**
    * 删除邀请码
-   * @description 根据ID删除邀请码
+   * @description 根据ID删除邀请码（仅限未使用的）
    * 
    * @param {number} id - 邀请码ID
    * @returns {Promise<number>} 影响的行数
    */
   delete: async (id) => {
-    const sql = 'DELETE FROM invite_code WHERE id = ?';
+    const sql = 'DELETE FROM invite_code WHERE id = ? AND used = 0';
     return await db.update(sql, [id]);
   },
 
@@ -323,5 +334,4 @@ const InviteCode = {
   }
 };
 
-// 导出邀请码模型
 module.exports = InviteCode;

@@ -145,6 +145,82 @@ Authorization: Bearer {token}
 
 ---
 
+### invite_code.controller.js - 邀请码管理控制器
+
+处理邀请码管理相关的 API 请求，仅限管理员访问。
+
+**包含的方法：**
+
+| 方法 | 路由 | 说明 | 需要认证 | 需要管理员 |
+|------|------|------|----------|------------|
+| generate | POST /api/invite-codes | 创建邀请码（批量生成） | 是 | 是 |
+| list | GET /api/invite-codes | 查询邀请码列表 | 是 | 是 |
+| stats | GET /api/invite-codes/stats | 获取邀请码统计 | 是 | 是 |
+| remove | DELETE /api/invite-codes/:id | 删除邀请码 | 是 | 是 |
+| cleanup | POST /api/invite-codes/cleanup | 清理过期邀请码 | 是 | 是 |
+
+#### generate - 创建邀请码（批量生成）
+
+**请求参数：**
+```json
+{
+  "count": 10,      // 生成数量（1-100）
+  "length": 16      // 邀请码长度（8-32位）
+}
+```
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "生成成功",
+  "data": {
+    "count": 10,
+    "list": [
+      { "id": 1, "code": "a1b2c3d4e5f6g7h8" },
+      { "id": 2, "code": "i9j0k1l2m3n4o5p6" }
+    ]
+  }
+}
+```
+
+#### list - 查询邀请码列表
+
+**请求参数（Query）：**
+- `page`: 页码（默认1）
+- `pageSize`: 每页数量（默认20）
+- `code`: 按邀请码模糊搜索
+- `used`: 按使用状态筛选（0未使用/1已使用）
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "code": "a1b2c3d4e5f6g7h8",
+        "used": 0,
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "use_time": null,
+        "user_id": null,
+        "username": null
+      }
+    ],
+    "pagination": {
+      "total": 100,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 5
+    }
+  }
+}
+```
+
+---
+
 ## 控制器设计原则
 
 1. **单一职责**：每个控制器只处理一类相关的请求

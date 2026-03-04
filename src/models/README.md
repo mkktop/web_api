@@ -75,7 +75,7 @@ const exists = await User.existsByUsername('test');
 
 ### invite_code.model.js - 邀请码表模型
 
-管理用户注册所需的邀请码。
+管理用户注册所需的邀请码，支持批量生成、查询、统计等功能。
 
 **表结构 (invite_code)：**
 
@@ -93,22 +93,48 @@ const exists = await User.existsByUsername('test');
 ```javascript
 const InviteCode = require('./models/invite_code.model');
 
-// 创建邀请码（自动生成32位随机码）
+// ==================== 生成邀请码 ====================
+
+// 创建单个邀请码（默认32位）
 const result = await InviteCode.create();
-console.log(result.code);  // 邀请码字符串
 
-// 批量创建
-const codes = await InviteCode.createBatch(10);
+// 创建指定长度的邀请码
+const result = await InviteCode.create({ length: 16 });
 
-// 验证邀请码
+// 批量生成邀请码（管理员专用）
+const codes = await InviteCode.createBatch({ count: 10, length: 16 });
+// 返回: [{ id: 1, code: 'abc...' }, { id: 2, code: 'def...' }, ...]
+
+// ==================== 验证邀请码 ====================
+
+// 验证邀请码是否有效（存在且未使用）
 const isValid = await InviteCode.isValid('abc123...');
 
-// 使用邀请码
+// 使用邀请码（标记为已使用，绑定用户）
 await InviteCode.use('abc123...', userId);
 
-// 查询统计
+// ==================== 查询邀请码 ====================
+
+// 查询邀请码列表（支持筛选和分页）
+const result = await InviteCode.findAll({
+  page: 1,
+  pageSize: 20,
+  code: 'abc',        // 按邀请码模糊搜索
+  used: 0             // 0未使用/1已使用
+});
+// 返回: { list: [...], pagination: { total, page, pageSize, totalPages } }
+
+// 统计邀请码数量
 const stats = await InviteCode.count();
-// { total: 100, used: 50, unused: 50 }
+// 返回: { total: 100, used: 50, unused: 50 }
+
+// ==================== 删除邀请码 ====================
+
+// 删除未使用的邀请码
+await InviteCode.delete(id);
+
+// 清理过期邀请码（删除超过30天未使用的）
+await InviteCode.deleteExpired(30);
 ```
 
 ---
