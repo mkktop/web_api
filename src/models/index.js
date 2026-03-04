@@ -14,6 +14,7 @@ const User = require('./user.model');
 const InviteCode = require('./invite_code.model');
 const UserProfile = require('./user_profile.model');
 const UserAuth = require('./user_auth.model');
+const Category = require('./category.model');
 
 module.exports = {
   // 数据库操作
@@ -29,5 +30,8 @@ module.exports = {
   UserProfile,
   
   // 用户权限模型
-  UserAuth
+  UserAuth,
+  
+  // 版块分类模型
+  Category
 };

@@ -32,6 +32,15 @@
 │   ├── GET /stats        # 获取邀请码统计
 │   ├── DELETE /:id       # 删除邀请码
 │   └── POST /cleanup     # 清理过期邀请码
+├── /categories           # 版块分类
+│   ├── GET /active       # 获取启用的版块列表（公开）
+│   ├── GET /:id          # 获取版块详情（公开）
+│   ├── GET /             # 获取版块列表（管理员）
+│   ├── GET /stats        # 获取版块统计（管理员）
+│   ├── POST /            # 创建版块（管理员）
+│   ├── PUT /:id          # 更新版块（管理员）
+│   ├── PUT /:id/status   # 更新版块状态（管理员）
+│   └── DELETE /:id       # 删除版块（管理员）
 ├── /device               # 设备相关（待实现）
 └── /ota                  # OTA升级（待实现）
 ```
@@ -87,6 +96,39 @@ app.use('/api', routes);
 - GET 用于获取资源
 - DELETE 用于删除资源
 - 特殊操作（stats、cleanup）作为子资源
+
+---
+
+### category.routes.js - 版块分类路由
+
+定义版块分类相关的API路由（RESTful风格）。
+
+**路由列表：**
+
+| 方法 | 路径 | 处理函数 | 说明 | 权限 |
+|------|------|----------|------|------|
+| GET | /active | categoryController.getActiveList | 获取启用的版块列表 | 公开 |
+| GET | /:id | categoryController.getById | 获取版块详情 | 公开 |
+| GET | / | categoryController.list | 获取版块列表 | admin |
+| GET | /stats | categoryController.stats | 获取版块统计 | admin |
+| POST | / | categoryController.create | 创建版块 | admin |
+| PUT | /:id | categoryController.update | 更新版块 | admin |
+| PUT | /:id/status | categoryController.updateStatus | 更新版块状态 | admin |
+| DELETE | /:id | categoryController.remove | 删除版块 | admin |
+
+**完整URL：**
+- `GET /api/categories/active` （公开）
+- `GET /api/categories/:id` （公开）
+- `GET /api/categories` （管理员）
+- `GET /api/categories/stats` （管理员）
+- `POST /api/categories` （管理员）
+- `PUT /api/categories/:id` （管理员）
+- `PUT /api/categories/:id/status` （管理员）
+- `DELETE /api/categories/:id` （管理员）
+
+**权限设计说明：**
+- 公开接口：获取启用的版块列表、获取版块详情
+- 管理员接口：创建、更新、删除版块
 
 ---
 

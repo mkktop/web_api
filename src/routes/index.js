@@ -32,6 +32,7 @@ const router = express.Router();
 const systemRoutes = require('./system.routes');
 const authRoutes = require('./auth.routes');
 const inviteCodeRoutes = require('./invite_code.routes');
+const categoryRoutes = require('./category.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -59,6 +60,9 @@ router.use('/system', systemRoutes);
 
 // 邀请码管理路由，前缀为 /invite-codes（RESTful风格，使用复数）
 router.use('/invite-codes', inviteCodeRoutes);
+
+// 版块分类路由，前缀为 /categories（RESTful风格，使用复数）
+router.use('/categories', categoryRoutes);
 
 // 设备相关路由（待实现）
 // router.use('/device', deviceRoutes);

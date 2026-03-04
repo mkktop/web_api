@@ -221,6 +221,68 @@ Authorization: Bearer {token}
 
 ---
 
+### category.controller.js - 版块分类控制器
+
+处理版块分类相关的 API 请求。
+
+**包含的方法：**
+
+| 方法 | 路由 | 说明 | 需要认证 | 需要管理员 |
+|------|------|------|----------|------------|
+| getActiveList | GET /api/categories/active | 获取启用的版块列表 | 否 | 否 |
+| getById | GET /api/categories/:id | 获取版块详情 | 否 | 否 |
+| list | GET /api/categories | 查询版块列表 | 是 | 是 |
+| stats | GET /api/categories/stats | 获取版块统计 | 是 | 是 |
+| create | POST /api/categories | 创建版块 | 是 | 是 |
+| update | PUT /api/categories/:id | 更新版块 | 是 | 是 |
+| updateStatus | PUT /api/categories/:id/status | 更新版块状态 | 是 | 是 |
+| remove | DELETE /api/categories/:id | 删除版块 | 是 | 是 |
+
+#### getActiveList - 获取启用的版块列表
+
+**说明：** 供前端展示用，只返回启用的版块，无需认证。
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "综合讨论",
+      "description": "综合讨论区，可以讨论任何话题",
+      "icon": null
+    }
+  ]
+}
+```
+
+#### create - 创建版块
+
+**请求参数：**
+```json
+{
+  "name": "新手入门",
+  "description": "新手入门指南和常见问题",
+  "icon": null,
+  "sort_order": 4
+}
+```
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "创建成功",
+  "data": {
+    "id": 4
+  }
+}
+```
+
+---
+
 ## 控制器设计原则
 
 1. **单一职责**：每个控制器只处理一类相关的请求

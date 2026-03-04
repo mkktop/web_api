@@ -35,6 +35,7 @@ const User = require('./user.model');
 const InviteCode = require('./invite_code.model');
 const UserProfile = require('./user_profile.model');
 const UserAuth = require('./user_auth.model');
+const Category = require('./category.model');
 
 /**
  * 创建数据库
@@ -96,6 +97,11 @@ const createTables = async () => {
   await UserAuth.createTable();
   logger.info('用户权限表创建完成');
   
+  // 5. 创建版块分类表
+  logger.info('创建版块分类表 (category)...');
+  await Category.createTable();
+  logger.info('版块分类表创建完成');
+  
   logger.info('所有数据表创建完成！');
 };
 
@@ -134,6 +140,17 @@ const createDefaultData = async () => {
   // 创建初始邀请码
   const code = await InviteCode.create();
   logger.info(`初始邀请码创建成功: ${code.code}`);
+  
+  // 创建默认版块
+  const categoriesExist = await Category.findByName('综合讨论');
+  if (!categoriesExist) {
+    await Category.create({ name: '综合讨论', description: '综合讨论区，可以讨论任何话题', sort_order: 1 });
+    await Category.create({ name: '技术交流', description: '技术问题讨论与交流', sort_order: 2 });
+    await Category.create({ name: '闲聊灌水', description: '轻松闲聊，分享生活', sort_order: 3 });
+    logger.info('默认版块创建成功');
+  } else {
+    logger.info('版块已存在，跳过创建');
+  }
 };
 
 /**
@@ -188,6 +205,7 @@ const initDatabase = async () => {
     logger.info('  - invite_code (邀请码表)');
     logger.info('  - user_profile (用户资料表)');
     logger.info('  - user_auth (用户权限表)');
+    logger.info('  - category (版块分类表)');
     
     process.exit(0);
   } catch (error) {

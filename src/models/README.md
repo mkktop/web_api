@@ -220,6 +220,83 @@ const topUsers = await UserAuth.getTopUsers(10);
 
 ---
 
+### category.model.js - 版块分类表模型
+
+管理论坛版块分类。
+
+**表结构 (category)：**
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| id | INT | NOT NULL, AUTO_INCREMENT | - | 版块ID（主键） |
+| name | VARCHAR(50) | NOT NULL | - | 版块名称 |
+| description | VARCHAR(255) | DEFAULT NULL | NULL | 版块描述 |
+| icon | VARCHAR(255) | DEFAULT NULL | NULL | 版块图标URL |
+| sort_order | INT | DEFAULT NULL | 0 | 排序（数字越小越靠前） |
+| status | TINYINT | DEFAULT NULL | 1 | 状态：1启用 0禁用 |
+| create_time | DATETIME | DEFAULT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| update_time | DATETIME | DEFAULT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**主要方法：**
+
+```javascript
+const Category = require('./models/category.model');
+
+// ==================== 创建版块 ====================
+
+const id = await Category.create({
+  name: '技术交流',
+  description: '技术问题讨论与交流',
+  sort_order: 1
+});
+
+// ==================== 查询版块 ====================
+
+// 根据ID查找
+const category = await Category.findById(1);
+
+// 根据名称查找
+const category = await Category.findByName('技术交流');
+
+// 检查名称是否存在（编辑时排除自身）
+const exists = await Category.existsByName('技术交流', excludeId);
+
+// 获取所有版块（支持筛选和分页）
+const result = await Category.findAll({
+  page: 1,
+  pageSize: 20,
+  status: 1,        // 按状态筛选
+  keyword: '技术'   // 按名称模糊搜索
+});
+// 返回: { list: [...], pagination: { total, page, pageSize, totalPages } }
+
+// 获取启用的版块列表（前端展示用）
+const list = await Category.findActive();
+
+// ==================== 更新版块 ====================
+
+await Category.update(1, {
+  name: '新名称',
+  description: '新描述',
+  sort_order: 2
+});
+
+// 更新状态
+await Category.updateStatus(1, 0);  // 禁用
+await Category.updateStatus(1, 1);  // 启用
+
+// ==================== 删除版块 ====================
+
+await Category.delete(1);
+
+// ==================== 统计 ====================
+
+const stats = await Category.count();
+// 返回: { total: 3, active: 3, inactive: 0 }
+```
+
+---
+
 ### init.js - 数据库初始化脚本
 
 初始化数据库和创建数据表。
@@ -238,8 +315,10 @@ npm run db:init
 4. 创建邀请码表 (invite_code)
 5. 创建用户资料表 (user_profile)
 6. 创建用户权限表 (user_auth)
-7. 创建默认管理员账号
-8. 创建初始邀请码
+7. 创建版块分类表 (category)
+8. 创建默认管理员账号
+9. 创建初始邀请码
+10. 创建默认版块
 
 **默认管理员：**
 - 用户名：admin

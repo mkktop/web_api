@@ -733,6 +733,332 @@ Invoke-RestMethod -Uri http://localhost:3000/api/invite-codes/cleanup -Method PO
 
 ---
 
+## 版块分类接口
+
+### 1. 获取启用的版块列表
+
+获取所有启用的版块，供前端展示用。
+
+**请求**
+
+```
+GET /api/categories/active
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "综合讨论",
+      "description": "综合讨论区，可以讨论任何话题",
+      "icon": null
+    },
+    {
+      "id": 2,
+      "name": "技术交流",
+      "description": "技术问题讨论与交流",
+      "icon": null
+    }
+  ]
+}
+```
+
+**调用示例**
+
+```bash
+# curl
+curl http://localhost:3000/api/categories/active
+
+# PowerShell
+Invoke-RestMethod -Uri http://localhost:3000/api/categories/active
+```
+
+---
+
+### 2. 获取版块详情
+
+根据ID获取版块详细信息。
+
+**请求**
+
+```
+GET /api/categories/{id}
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 版块ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "id": 1,
+    "name": "综合讨论",
+    "description": "综合讨论区，可以讨论任何话题",
+    "icon": null,
+    "sort_order": 1,
+    "status": 1,
+    "create_time": "2024-01-15T10:30:45.000Z",
+    "update_time": "2024-01-15T10:30:45.000Z"
+  }
+}
+```
+
+---
+
+### 3. 获取版块列表（管理用）
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员查询版块列表，支持筛选和分页。
+
+**请求**
+
+```
+GET /api/categories?page=1&pageSize=10&status=1
+Authorization: Bearer {token}
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码（默认1） |
+| pageSize | number | 否 | 每页数量（默认20） |
+| status | number | 否 | 按状态筛选（1启用/0禁用） |
+| keyword | string | 否 | 按名称模糊搜索 |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "name": "综合讨论",
+        "description": "综合讨论区，可以讨论任何话题",
+        "icon": null,
+        "sort_order": 1,
+        "status": 1,
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "update_time": "2024-01-15T10:30:45.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 3,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+### 4. 创建版块
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员创建新版块。
+
+**请求**
+
+```
+POST /api/categories
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 是 | 版块名称（最多50字符） |
+| description | string | 否 | 版块描述 |
+| icon | string | 否 | 版块图标URL |
+| sort_order | number | 否 | 排序（默认0） |
+
+**请求示例**
+
+```json
+{
+  "name": "新手入门",
+  "description": "新手入门指南和常见问题",
+  "sort_order": 4
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "创建成功",
+  "data": {
+    "id": 4
+  }
+}
+```
+
+---
+
+### 5. 更新版块
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员更新版块信息。
+
+**请求**
+
+```
+PUT /api/categories/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 版块ID |
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 否 | 版块名称 |
+| description | string | 否 | 版块描述 |
+| icon | string | 否 | 版块图标URL |
+| sort_order | number | 否 | 排序 |
+| status | number | 否 | 状态（1启用/0禁用） |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "更新成功",
+  "data": {}
+}
+```
+
+---
+
+### 6. 更新版块状态
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员启用/禁用版块。
+
+**请求**
+
+```
+PUT /api/categories/{id}/status
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | number | 是 | 状态（1启用/0禁用） |
+
+**请求示例**
+
+```json
+{
+  "status": 0
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "已禁用",
+  "data": {}
+}
+```
+
+---
+
+### 7. 删除版块
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员删除版块。
+
+**请求**
+
+```
+DELETE /api/categories/{id}
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "删除成功",
+  "data": {}
+}
+```
+
+**失败响应**
+
+| success | message | 说明 |
+|---------|---------|------|
+| false | 版块不存在 | 版块ID无效 |
+
+---
+
+### 8. 获取版块统计
+
+> **权限说明**：仅限 admin 角色访问
+
+获取版块统计数据。
+
+**请求**
+
+```
+GET /api/categories/stats
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "total": 3,
+    "active": 3,
+    "inactive": 0
+  }
+}
+```
+
+---
+
 ## 错误码说明
 
 | HTTP状态码 | 说明 |
