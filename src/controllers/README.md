@@ -18,110 +18,176 @@
 
 **包含的方法：**
 
-#### getTime - 获取服务器时间
+| 方法 | 路由 | 说明 |
+|------|------|------|
+| getTime | GET /api/system/time | 获取服务器时间 |
+| getSystemInfo | GET /api/system/info | 获取系统信息 |
 
-返回服务器的当前时间，提供多种时间格式。
+**使用示例：**
 
-**请求：**
+```javascript
+const systemController = require('./controllers/system.controller');
+
+// 在路由中使用
+router.get('/system/time', systemController.getTime);
+router.get('/system/info', systemController.getSystemInfo);
 ```
-GET /api/system/time
-```
-
-**响应示例：**
-```json
-{
-  "success": true,
-  "message": "获取时间成功",
-  "data": {
-    "timestamp": 1705315845348,
-    "iso": "2024-01-15T10:30:45.348Z",
-    "utc": "Mon, 15 Jan 2024 10:30:45 GMT",
-    "local": "2024/1/15 18:30:45",
-    "year": 2024,
-    "month": 1,
-    "day": 15,
-    "hour": 18,
-    "minute": 30,
-    "second": 45,
-    "dayOfWeek": 1,
-    "timezone": "UTC+8"
-  },
-  "timestamp": "2024-01-15T10:30:45.358Z"
-}
-```
-
-**时间字段说明：**
-
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| timestamp | number | Unix时间戳（毫秒） | 1705315845348 |
-| iso | string | ISO 8601格式 | 2024-01-15T10:30:45.348Z |
-| utc | string | UTC格式 | Mon, 15 Jan 2024 10:30:45 GMT |
-| local | string | 本地时间（北京时间） | 2024/1/15 18:30:45 |
-| year | number | 年份 | 2024 |
-| month | number | 月份（1-12） | 1 |
-| day | number | 日期（1-31） | 15 |
-| hour | number | 小时（0-23） | 18 |
-| minute | number | 分钟（0-59） | 30 |
-| second | number | 秒（0-59） | 45 |
-| dayOfWeek | number | 星期几（0=周日） | 1 |
-| timezone | string | 时区 | UTC+8 |
-
-**使用场景：**
-- 嵌入式设备时间同步
-- 验证设备与服务器时间差
-- 设备没有实时时钟时获取准确时间
 
 ---
 
-#### getSystemInfo - 获取系统信息
+### auth.controller.js - 认证控制器
 
-返回服务器的基本信息。
+处理用户认证相关的 API 请求，包括注册、登录、获取用户信息等。
 
-**请求：**
-```
-GET /api/system/info
-```
+**包含的方法：**
 
-**响应示例：**
+| 方法 | 路由 | 说明 | 需要认证 |
+|------|------|------|----------|
+| register | POST /api/register | 用户注册 | 否 |
+| login | POST /api/login | 用户登录 | 否 |
+| getUserInfo | GET /api/user/info | 获取用户信息 | 是 |
+| updateProfile | PUT /api/user/profile | 更新用户资料 | 是 |
+| changePassword | PUT /api/user/password | 修改密码 | 是 |
+
+#### register - 用户注册
+
+**请求参数：**
 ```json
 {
-  "success": true,
-  "message": "获取系统信息成功",
-  "data": {
-    "nodeVersion": "v22.19.0",
-    "platform": "win32",
-    "uptime": 3600,
-    "memoryUsage": {
-      "rss": 45678592,
-      "heapTotal": 20971520,
-      "heapUsed": 15728640,
-      "external": 1048576
-    },
-    "env": "development"
-  },
-  "timestamp": "2024-01-15T10:30:45.000Z"
+  "username": "testuser",
+  "password": "123456",
+  "email": "test@example.com",
+  "inviteCode": "abc123..."
 }
 ```
 
-**字段说明：**
+**注册流程：**
+1. 校验参数格式（用户名/密码/邮箱）
+2. 校验邀请码是否存在且未使用
+3. 校验用户名/邮箱是否已存在
+4. 密码 bcrypt 加密
+5. 插入 user 表
+6. 自动插入 user_profile（空值）
+7. 自动插入 user_auth（默认值）
+8. 更新邀请码状态
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| nodeVersion | string | Node.js 版本号 |
-| platform | string | 操作系统平台（win32/linux/darwin） |
-| uptime | number | 进程运行时间（秒） |
-| memoryUsage | object | 内存使用情况（字节） |
-| env | string | 运行环境 |
+**成功响应：**
+```json
+{
+  "code": 200,
+  "msg": "注册成功",
+  "data": {}
+}
+```
 
-**使用场景：**
-- 服务器健康检查
-- 监控服务器状态
-- 调试环境信息
+#### login - 用户登录
+
+**请求参数：**
+```json
+{
+  "username": "testuser",
+  "password": "123456"
+}
+```
+
+**登录流程：**
+1. 校验用户名是否存在
+2. bcrypt 比对密码
+3. 生成 JWT Token
+4. 返回 Token + 用户信息
+
+**成功响应：**
+```json
+{
+  "code": 200,
+  "msg": "登录成功",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "username": "testuser",
+      "nickname": "testuser",
+      "role": "user"
+    }
+  }
+}
+```
+
+#### getUserInfo - 获取用户信息
+
+**请求头：**
+```
+Authorization: Bearer {token}
+```
+
+**成功响应：**
+```json
+{
+  "code": 200,
+  "msg": "获取成功",
+  "data": {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com",
+    "nickname": "testuser",
+    "role": "user",
+    "status": 1,
+    "signature": null,
+    "gender": "unknown",
+    "birthday": null,
+    "points": 0,
+    "download_limit": 50,
+    "can_upload": 1,
+    "can_comment": 1
+  }
+}
+```
+
+---
 
 ## 控制器设计原则
 
 1. **单一职责**：每个控制器只处理一类相关的请求
 2. **统一响应**：使用统一的响应格式
 3. **错误处理**：合理处理异常，返回友好的错误信息
-4. **代码复用**：公共逻辑抽取到服务层或工具函数
+4. **参数验证**：在处理前验证请求参数
+5. **事务处理**：涉及多表操作时使用事务
+
+## 控制器模板
+
+```javascript
+/**
+ * @fileoverview XXX控制器
+ * @description 处理XXX相关的API请求
+ */
+
+// 引入依赖
+const db = require('../models');
+const response = require('../utils/response');
+const logger = require('../utils/logger');
+const HttpStatus = require('../config/constants');
+
+/**
+ * 获取列表
+ */
+const getList = async (req, res) => {
+  try {
+    // 1. 获取参数
+    const { page, pageSize } = req.query;
+    
+    // 2. 查询数据
+    const list = await db.query('SELECT * FROM table LIMIT ? OFFSET ?', [pageSize, (page - 1) * pageSize]);
+    
+    // 3. 返回响应
+    return response.success(res, list, '获取成功');
+    
+  } catch (error) {
+    logger.error('获取列表失败:', error.message);
+    return response.error(res, '获取失败', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+module.exports = {
+  getList
+};
+```

@@ -17,6 +17,71 @@
 
 ## 文件说明
 
+### auth.js - 认证中间件
+
+提供 JWT Token 验证和用户认证功能。
+
+**包含的中间件：**
+
+#### authMiddleware - 认证中间件
+
+验证请求头中的 JWT Token，提取用户信息。
+
+**使用示例：**
+```javascript
+const { authMiddleware } = require('../middlewares/auth');
+
+// 保护需要登录的路由
+router.get('/user/info', authMiddleware, (req, res) => {
+  console.log(req.user.id);  // 当前登录用户的 ID
+});
+```
+
+**工作原理：**
+1. 从请求头获取 Authorization 字段
+2. 提取 Bearer Token
+3. 验证 Token 是否有效
+4. 将用户信息附加到 req.user
+5. 调用 next() 继续执行
+
+**请求头格式：**
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**失败响应：**
+```json
+{
+  "code": 401,
+  "msg": "未登录或 Token 过期",
+  "data": {}
+}
+```
+
+#### optionalAuth - 可选认证中间件
+
+如果有 Token 则验证，没有 Token 也允许继续。
+
+```javascript
+const { optionalAuth } = require('../middlewares/auth');
+
+// 可登录访问，也可游客访问
+router.get('/posts', optionalAuth, getPosts);
+```
+
+#### adminMiddleware - 管理员权限中间件
+
+验证用户是否为管理员（必须先使用 authMiddleware）。
+
+```javascript
+const { authMiddleware, adminMiddleware } = require('../middlewares/auth');
+
+// 只有管理员可以访问
+router.delete('/user/:id', authMiddleware, adminMiddleware, deleteUser);
+```
+
+---
+
 ### errorHandler.js - 错误处理中间件
 
 提供统一的错误处理机制。
@@ -36,9 +101,9 @@ app.use(notFound);
 **响应示例：**
 ```json
 {
-  "success": false,
-  "message": "路由 /api/unknown 不存在",
-  "timestamp": "2024-01-15T10:30:45.000Z"
+  "code": 404,
+  "msg": "路由 /api/unknown 不存在",
+  "data": {}
 }
 ```
 
@@ -60,9 +125,9 @@ app.use(errorHandler);
 **错误响应示例：**
 ```json
 {
-  "success": false,
-  "message": "服务器内部错误",
-  "timestamp": "2024-01-15T10:30:45.000Z"
+  "code": 500,
+  "msg": "服务器内部错误",
+  "data": {}
 }
 ```
 
@@ -83,6 +148,29 @@ app.use(notFound);      // 处理404
 app.use(errorHandler);  // 处理其他错误
 ```
 
+## 在路由中使用认证中间件
+
+```javascript
+const express = require('express');
+const { authMiddleware, adminMiddleware } = require('../middlewares/auth');
+
+const router = express.Router();
+
+// 公开路由（无需登录）
+router.post('/login', login);
+router.post('/register', register);
+
+// 需要登录的路由
+router.get('/user/info', authMiddleware, getUserInfo);
+router.put('/user/profile', authMiddleware, updateProfile);
+
+// 需要管理员权限的路由
+router.get('/admin/users', authMiddleware, adminMiddleware, listUsers);
+router.delete('/admin/user/:id', authMiddleware, adminMiddleware, deleteUser);
+
+module.exports = router;
+```
+
 ## 自定义中间件示例
 
 ```javascript
@@ -92,13 +180,16 @@ const requestLogger = (req, res, next) => {
   next();  // 必须调用next()，否则请求会卡住
 };
 
-// 认证中间件
-const auth = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) {
-    return res.status(401).json({ message: '未授权' });
-  }
-  // 验证token...
-  next();
+// 角色权限中间件
+const roleMiddleware = (roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ code: 401, msg: '未登录', data: {} });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ code: 403, msg: '权限不足', data: {} });
+    }
+    next();
+  };
 };
 ```

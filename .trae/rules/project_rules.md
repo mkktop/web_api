@@ -1,6 +1,5 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
 ---
 # 项目开发规范
 
@@ -119,13 +118,30 @@ web_api/
 ### 统一响应格式
 
 成功响应：
-```javascript
-response.success(res, data, '操作成功');
+```json
+{
+  "success": true,
+  "message": "操作成功",
+  "data": { ... }
+}
 ```
 
 失败响应：
+```json
+{
+  "success": false,
+  "message": "错误信息",
+  "data": {}
+}
+```
+
+使用方式：
 ```javascript
-response.error(res, '错误信息', HttpStatus.BAD_REQUEST);
+// 成功响应
+response.success(res, data, '操作成功');
+
+// 失败响应
+response.error(res, '错误信息', 400);
 ```
 
 ### 错误处理

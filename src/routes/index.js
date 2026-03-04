@@ -9,6 +9,11 @@
  * 
  * 路由组织结构：
  * /api                    <- 主应用挂载点（在app.js中配置）
+ *   ├── POST /register    <- 用户注册
+ *   ├── POST /login       <- 用户登录
+ *   ├── GET  /user/info   <- 获取用户信息
+ *   ├── PUT  /user/profile<- 更新用户资料
+ *   ├── PUT  /user/password<- 修改密码
  *   ├── /system           <- 系统相关路由
  *   │     ├── /time       <- 获取时间
  *   │     └── /info       <- 获取系统信息
@@ -25,6 +30,7 @@ const router = express.Router();
 // 引入各个模块的路由
 // 每个模块有自己的路由文件，便于管理和维护
 const systemRoutes = require('./system.routes');
+const authRoutes = require('./auth.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -39,6 +45,13 @@ const systemRoutes = require('./system.routes');
  * - systemRoutes中定义了 GET /time
  * - 挂载到 /system 后，完整路径变为 GET /api/system/time
  */
+
+// 认证相关路由（注册、登录等）
+// 这些路由直接挂载到根路径，不使用前缀
+// POST /api/register
+// POST /api/login
+// GET  /api/user/info
+router.use('/', authRoutes);
 
 // 系统相关路由，前缀为 /system
 router.use('/system', systemRoutes);

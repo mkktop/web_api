@@ -55,8 +55,7 @@ logger.debug('请求参数：', { id: 1, name: 'test' });
 {
   "success": true,
   "message": "操作成功",
-  "data": { ... },
-  "timestamp": "2024-01-15T10:30:45.000Z"
+  "data": { ... }
 }
 ```
 
@@ -65,8 +64,7 @@ logger.debug('请求参数：', { id: 1, name: 'test' });
 {
   "success": false,
   "message": "操作失败",
-  "errors": ["错误详情1", "错误详情2"],
-  "timestamp": "2024-01-15T10:30:45.000Z"
+  "data": {}
 }
 ```
 
@@ -81,20 +79,72 @@ response.success(res, { id: 1, name: '设备1' }, '获取成功');
 // 失败响应
 response.error(res, '设备不存在', 404);
 
-// 带详细错误的响应
-response.error(res, '参数错误', 400, ['用户名不能为空']);
+// 分页响应
+response.page(res, list, total, page, pageSize, '获取成功');
 ```
 
 **API 参考：**
 
 | 函数 | 参数 | 说明 |
 |------|------|------|
-| success | res, data, message?, statusCode? | 返回成功响应 |
-| error | res, message?, statusCode?, errors? | 返回错误响应 |
+| success | res, data?, message? | 返回成功响应 |
+| error | res, message?, statusCode?, data? | 返回错误响应 |
+| page | res, list, total, page, pageSize, message? | 返回分页响应 |
 
 **参数说明：**
 - `res`: Express 响应对象（必需）
-- `data`: 返回的数据（success 必需）
+- `data`: 返回的数据（可选，默认 {}）
 - `message`: 提示消息（可选，有默认值）
-- `statusCode`: HTTP 状态码（可选，有默认值）
-- `errors`: 详细错误信息数组（可选）
+- `statusCode`: HTTP状态码（可选，有默认值）
+
+---
+
+### jwt.js - JWT 工具
+
+提供 JWT Token 的生成和验证功能。
+
+**什么是 JWT？**
+- JWT (JSON Web Token) 是一种开放标准，用于安全地传输信息
+- 由三部分组成：Header、Payload、Signature
+- 常用于身份验证
+
+**使用示例：**
+
+```javascript
+const jwt = require('./utils/jwt');
+
+// 生成 Token
+const token = jwt.generateToken({
+  id: 1,
+  username: 'admin',
+  role: 'admin'
+});
+
+// 验证 Token
+const decoded = jwt.verifyToken(token);
+if (decoded) {
+  console.log('用户ID:', decoded.id);
+  console.log('用户名:', decoded.username);
+}
+
+// 从请求头提取 Token
+const token = jwt.extractToken(req.headers.authorization);
+```
+
+**API 参考：**
+
+| 函数 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| generateToken | payload | string | 生成 JWT Token |
+| verifyToken | token | object/null | 验证 Token，返回解码数据 |
+| extractToken | authHeader | string/null | 从 Authorization 头提取 Token |
+| decodeToken | token | object/null | 解码 Token（不验证签名） |
+
+**Token 有效期：**
+- 默认 7 天
+- 在 `.env` 中配置：`JWT_EXPIRES_IN=604800`（秒）
+
+**安全说明：**
+- JWT 密钥从环境变量读取，禁止硬编码
+- 敏感信息不要放在 Token 中
+- Token 有效期不宜过长
