@@ -639,6 +639,43 @@ Authorization: Bearer {token}
 }
 ```
 
+#### 获取我兑换的邀请码列表（登录）
+```
+GET /api/sign-in/points/codes?page=1&pageSize=20&used=0
+Authorization: Bearer {token}
+```
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码 |
+| pageSize | number | 否 | 每页数量 |
+| used | number | 否 | 按使用状态筛选（0未使用/1已使用） |
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "code": "abc123def456",
+        "used": 0,
+        "create_time": "2024-01-01T00:00:00.000Z",
+        "use_time": null
+      }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 1
+    }
+  }
+}
+```
+
 ---
 
 ### 5.8 资源下载接口

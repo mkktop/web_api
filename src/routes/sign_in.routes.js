@@ -51,4 +51,11 @@ router.get('/points', authMiddleware, signInController.getPointsInfo);
  */
 router.post('/points/exchange', authMiddleware, signInController.exchangeInviteCode);
 
+/**
+ * 获取我兑换的邀请码列表
+ * @route GET /api/points/codes
+ * @permission user
+ */
+router.get('/points/codes', authMiddleware, signInController.getMyInviteCodes);
+
 module.exports = router;

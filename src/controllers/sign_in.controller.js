@@ -149,8 +149,8 @@ const exchangeInviteCode = async (req, res) => {
     // 扣除积分
     await UserAuth.deductPoints(userId, EXCHANGE_POINTS);
     
-    // 生成邀请码
-    const code = await InviteCode.create();
+    // 生成邀请码（记录创建者）
+    const code = await InviteCode.create({ created_by: userId });
     
     logger.info(`用户兑换邀请码: 用户ID ${userId}, 消耗${EXCHANGE_POINTS}积分`);
     
@@ -191,10 +191,34 @@ const getPointsInfo = async (req, res) => {
   }
 };
 
+/**
+ * 获取我兑换的邀请码列表
+ * @description 查询用户通过积分兑换获得的邀请码
+ */
+const getMyInviteCodes = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, pageSize = 20, used } = req.query;
+    
+    const result = await InviteCode.getMyCodes(userId, {
+      page: parseInt(page),
+      pageSize: parseInt(pageSize),
+      used
+    });
+    
+    return response.success(res, result, '获取成功');
+    
+  } catch (error) {
+    logger.error('获取邀请码列表失败:', error.message);
+    return response.error(res, '获取失败', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   signIn,
   getStatus,
   getRecords,
   exchangeInviteCode,
-  getPointsInfo
+  getPointsInfo,
+  getMyInviteCodes
 };

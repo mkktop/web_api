@@ -46,11 +46,13 @@ const InviteCode = {
         code VARCHAR(32) NOT NULL COMMENT '邀请码',
         used TINYINT DEFAULT 0 COMMENT '状态：0未使用 1已使用',
         user_id INT DEFAULT NULL COMMENT '绑定的用户ID',
+        created_by INT DEFAULT NULL COMMENT '创建者ID（用户兑换时记录）',
         create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
         use_time DATETIME DEFAULT NULL COMMENT '使用时间',
         PRIMARY KEY (id),
         UNIQUE KEY code (code),
         KEY user_id (user_id),
+        KEY created_by (created_by),
         KEY used (used)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请码表';
     `;
@@ -94,11 +96,11 @@ const InviteCode = {
    * const result = await InviteCode.create({ length: 16 });
    */
   create: async (options = {}) => {
-    const { length = 32, code: customCode } = options;
+    const { length = 32, code: customCode, created_by = null } = options;
     const inviteCode = customCode || InviteCode.generateCode(length);
     
-    const sql = 'INSERT INTO invite_code (code) VALUES (?)';
-    const id = await db.insert(sql, [inviteCode]);
+    const sql = 'INSERT INTO invite_code (code, created_by) VALUES (?, ?)';
+    const id = await db.insert(sql, [inviteCode, created_by]);
     
     return { id, code: inviteCode };
   },
@@ -331,6 +333,55 @@ const InviteCode = {
     const sql = 'SELECT * FROM invite_code WHERE user_id = ? LIMIT 1';
     const rows = await db.query(sql, [userId]);
     return rows.length > 0 ? rows[0] : null;
+  },
+
+  /**
+   * 获取用户兑换的邀请码列表
+   * @description 查询用户通过积分兑换获得的邀请码
+   * 
+   * @param {number} userId - 用户ID
+   * @param {Object} options - 查询选项
+   * @returns {Promise<Object>} 邀请码列表
+   */
+  getMyCodes: async (userId, options = {}) => {
+    const { page = 1, pageSize = 20, used } = options;
+    const offset = (page - 1) * pageSize;
+    
+    let whereClause = 'WHERE created_by = ?';
+    const params = [userId];
+    
+    if (used !== undefined && used !== null && used !== '') {
+      whereClause += ' AND used = ?';
+      params.push(parseInt(used));
+    }
+    
+    const countSql = `SELECT COUNT(*) as total FROM invite_code ${whereClause}`;
+    const countRows = await db.query(countSql, params);
+    const total = countRows[0].total;
+    
+    const listSql = `
+      SELECT 
+        id,
+        code,
+        used,
+        create_time,
+        use_time
+      FROM invite_code 
+      ${whereClause}
+      ORDER BY create_time DESC
+      LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}
+    `;
+    const list = await db.query(listSql, params);
+    
+    return {
+      list,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    };
   }
 };
 

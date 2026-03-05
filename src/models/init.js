@@ -30,6 +30,9 @@ const config = require('../config');
 // 引入日志工具
 const logger = require('../utils/logger');
 
+// 引入数据库操作模块（用于迁移）
+const db = require('./database');
+
 // 引入数据模型
 const User = require('./user.model');
 const InviteCode = require('./invite_code.model');
@@ -184,6 +187,37 @@ const createDefaultData = async () => {
 };
 
 /**
+ * 数据库迁移
+ * @description 添加新字段等数据库结构变更
+ */
+const runMigrations = async () => {
+  logger.info('执行数据库迁移...');
+  
+  try {
+    // 直接尝试添加字段，如果已存在会报错但不影响
+    try {
+      await db.query(`
+        ALTER TABLE invite_code 
+        ADD COLUMN created_by INT DEFAULT NULL COMMENT '创建者ID（用户兑换时记录）' AFTER user_id
+      `);
+      await db.query(`ALTER TABLE invite_code ADD INDEX created_by (created_by)`);
+      logger.info('添加 invite_code.created_by 字段成功');
+    } catch (err) {
+      if (err.code === 'ER_DUP_FIELDNAME') {
+        logger.info('invite_code.created_by 字段已存在');
+      } else {
+        throw err;
+      }
+    }
+    
+    logger.info('数据库迁移完成');
+  } catch (error) {
+    logger.warn(`数据库迁移警告: ${error.message}`);
+    // 不抛出错误，继续执行
+  }
+};
+
+/**
  * 主初始化函数
  * @description 执行完整的数据库初始化流程
  */
@@ -215,6 +249,9 @@ const initDatabase = async () => {
     
     // 创建数据表（使用连接池）
     await createTables();
+    
+    // 执行数据库迁移
+    await runMigrations();
     
     // 创建默认数据
     await createDefaultData();
