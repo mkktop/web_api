@@ -10,6 +10,8 @@
  * 
  * 权限说明：
  * - 所有操作仅限管理员
+ * - ID为1的管理员是超级管理员，拥有最高权限
+ * - 只有超级管理员可以任命/撤销管理员
  */
 
 // 引入模型
@@ -110,6 +112,7 @@ const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const operatorId = req.user.id;
     
     if (status === undefined || ![0, 1].includes(parseInt(status))) {
       return response.error(res, '状态值无效');
@@ -120,8 +123,14 @@ const updateUserStatus = async (req, res) => {
       return response.error(res, '用户不存在', HttpStatus.NOT_FOUND);
     }
     
-    if (user.role === 'admin') {
-      return response.error(res, '不能禁用管理员账号');
+    // ID为1的是超级管理员，不能被操作
+    if (parseInt(id) === 1) {
+      return response.error(res, '超级管理员不能被操作');
+    }
+    
+    // 不能操作其他管理员（除非自己是超级管理员）
+    if (user.role === 'admin' && operatorId !== 1) {
+      return response.error(res, '没有权限操作管理员账号');
     }
     
     await User.updateStatus(id, parseInt(status));
@@ -138,15 +147,21 @@ const updateUserStatus = async (req, res) => {
 
 /**
  * 更新用户角色
- * @description 管理员设置用户角色
+ * @description 管理员设置用户角色（仅超级管理员可任命管理员）
  */
 const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
+    const operatorId = req.user.id;
     
     if (!role || !['user', 'admin'].includes(role)) {
       return response.error(res, '角色值无效');
+    }
+    
+    // ID为1的是超级管理员，不能被操作
+    if (parseInt(id) === 1) {
+      return response.error(res, '超级管理员不能被操作');
     }
     
     const user = await User.findById(id);
@@ -154,9 +169,14 @@ const updateUserRole = async (req, res) => {
       return response.error(res, '用户不存在', HttpStatus.NOT_FOUND);
     }
     
+    // 只有超级管理员可以任命/撤销管理员
+    if (operatorId !== 1) {
+      return response.error(res, '只有超级管理员可以设置管理员角色');
+    }
+    
     await User.updateRole(id, role);
     
-    logger.info(`管理员更新用户角色: 用户ID ${id}, 角色 ${role}`);
+    logger.info(`超级管理员更新用户角色: 用户ID ${id}, 角色 ${role}`);
     
     return response.success(res, {}, '角色更新成功');
     
