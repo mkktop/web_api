@@ -25,7 +25,7 @@ const CONTINUOUS_BONUS = {
   30: 50   // 连续30天额外50积分
 };
 // 兑换邀请码所需积分
-const EXCHANGE_POINTS = 50;
+const EXCHANGE_POINTS = 200;
 
 /**
  * 签到
