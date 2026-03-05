@@ -248,6 +248,37 @@ const User = {
   },
 
   /**
+   * 获取用户统计数据
+   * @description 获取用户相关的统计数据（用于管理后台）
+   * 
+   * @returns {Promise<Object>} 用户统计数据
+   */
+  getStats: async () => {
+    // 总用户数
+    const totalSql = 'SELECT COUNT(*) as count FROM user';
+    const totalRows = await db.query(totalSql);
+    
+    // 活跃用户数
+    const activeSql = 'SELECT COUNT(*) as count FROM user WHERE status = 1';
+    const activeRows = await db.query(activeSql);
+    
+    // 禁用用户数
+    const disabledSql = 'SELECT COUNT(*) as count FROM user WHERE status = 0';
+    const disabledRows = await db.query(disabledSql);
+    
+    // 管理员数量
+    const adminsSql = 'SELECT COUNT(*) as count FROM user WHERE role = "admin"';
+    const adminsRows = await db.query(adminsSql);
+    
+    return {
+      total: totalRows[0].count,
+      active: activeRows[0].count,
+      disabled: disabledRows[0].count,
+      admins: adminsRows[0].count
+    };
+  },
+
+  /**
    * 更新用户信息
    * @description 更新指定用户的信息
    * 

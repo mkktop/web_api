@@ -170,10 +170,10 @@ Content-Type: application/json
 **请求参数：**
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| username | string | 是 | 用户名（4-20字符） |
-| password | string | 是 | 密码（6-20字符） |
+| username | string | 是 | 用户名（3-20位字母、数字或下划线） |
+| password | string | 是 | 密码（至少6位） |
 | email | string | 是 | 邮箱 |
-| invite_code | string | 是 | 邀请码 |
+| inviteCode | string | 是 | 邀请码 |
 
 **请求示例：**
 ```json
@@ -181,7 +181,7 @@ Content-Type: application/json
   "username": "testuser",
   "password": "123456",
   "email": "test@example.com",
-  "invite_code": "abc123def456"
+  "inviteCode": "abc123def456"
 }
 ```
 

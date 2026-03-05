@@ -304,7 +304,7 @@ const deleteComment = async (req, res) => {
  */
 const getDashboard = async (req, res) => {
   try {
-    const userCount = await User.count();
+    const userStats = await User.getStats();
     const postStats = await Post.count();
     const categoryStats = await Category.count();
     const inviteCodeStats = await InviteCode.count();
@@ -324,7 +324,7 @@ const getDashboard = async (req, res) => {
     
     return response.success(res, {
       overview: {
-        total_users: userCount.total,
+        total_users: userStats.total,
         total_posts: postStats.total,
         total_comments: await Comment.countAll(),
         total_categories: categoryStats.total
@@ -335,10 +335,10 @@ const getDashboard = async (req, res) => {
         new_comments: newCommentsToday
       },
       users: {
-        total: userCount.total,
-        active: userCount.active,
-        disabled: userCount.disabled,
-        admins: userCount.admins
+        total: userStats.total,
+        active: userStats.active,
+        disabled: userStats.disabled,
+        admins: userStats.admins
       },
       posts: {
         total: postStats.total,
