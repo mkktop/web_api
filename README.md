@@ -433,6 +433,7 @@ npm run db:init
 ## 文档目录
 
 - [API接口文档](docs/API.md)
+- [前端对接指南](docs/FRONTEND_GUIDE.md) ⭐ **给前端开发人员**
 - [部署指南](docs/DEPLOY.md)
 - [数据模型文档](src/models/README.md)
 - [项目开发规范](.trae/rules/project_rules.md)
@@ -450,11 +451,12 @@ npm run db:init
 - [x] 点赞收藏功能
 - [x] 签到积分系统
 - [x] 积分兑换邀请码
+- [x] 资源下载积分兑换
 - [x] 管理员后台接口
+- [ ] 搜索功能
+- [ ] 通知系统
 - [ ] 设备注册与管理
-- [ ] 设备心跳检测
 - [ ] OTA固件升级
-- [ ] WebSocket实时通信
 
 ## 许可证
 

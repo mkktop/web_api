@@ -40,6 +40,7 @@ const Post = require('./post.model');
 const Comment = require('./comment.model');
 const PostInteraction = require('./post_interaction.model');
 const SignIn = require('./sign_in.model');
+const PostResource = require('./post_resource.model');
 
 /**
  * 创建数据库
@@ -125,6 +126,11 @@ const createTables = async () => {
   logger.info('创建签到表 (sign_in)...');
   await SignIn.createTable();
   logger.info('签到表创建完成');
+  
+  // 10. 创建资源兑换表
+  logger.info('创建资源兑换表 (post_resource, resource_purchase)...');
+  await PostResource.createTables();
+  logger.info('资源兑换表创建完成');
   
   logger.info('所有数据表创建完成！');
 };
