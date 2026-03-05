@@ -16,6 +16,7 @@ const UserProfile = require('./user_profile.model');
 const UserAuth = require('./user_auth.model');
 const Category = require('./category.model');
 const Post = require('./post.model');
+const Comment = require('./comment.model');
 
 module.exports = {
   // 数据库操作
@@ -37,5 +38,8 @@ module.exports = {
   Category,
   
   // 帖子模型
-  Post
+  Post,
+  
+  // 评论模型
+  Comment
 };

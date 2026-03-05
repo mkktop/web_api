@@ -37,6 +37,7 @@ const UserProfile = require('./user_profile.model');
 const UserAuth = require('./user_auth.model');
 const Category = require('./category.model');
 const Post = require('./post.model');
+const Comment = require('./comment.model');
 
 /**
  * 创建数据库
@@ -107,6 +108,11 @@ const createTables = async () => {
   logger.info('创建帖子表 (post)...');
   await Post.createTable();
   logger.info('帖子表创建完成');
+  
+  // 7. 创建评论表
+  logger.info('创建评论表 (comment)...');
+  await Comment.createTable();
+  logger.info('评论表创建完成');
   
   logger.info('所有数据表创建完成！');
 };

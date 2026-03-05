@@ -1416,6 +1416,249 @@ Content-Type: application/json
 
 ---
 
+## 评论管理接口
+
+### 1. 获取帖子的评论列表
+
+获取指定帖子的所有顶级评论（不包括回复）。
+
+**请求**
+
+```
+GET /api/posts/{postId}/comments?page=1&pageSize=20
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| postId | number | 是 | 帖子ID |
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码（默认1） |
+| pageSize | number | 否 | 每页数量（默认20，最大50） |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "post_id": 1,
+        "user_id": 1,
+        "content": "这是一条评论",
+        "parent_id": null,
+        "reply_to_user_id": null,
+        "status": 1,
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "author_name": "admin",
+        "author_nickname": "管理员",
+        "author_avatar": null,
+        "reply_count": 2
+      }
+    ],
+    "pagination": {
+      "total": 10,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+### 2. 获取评论的回复列表
+
+获取指定评论的所有回复。
+
+**请求**
+
+```
+GET /api/comments/{commentId}/replies?page=1&pageSize=50
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| commentId | number | 是 | 评论ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 2,
+      "post_id": 1,
+      "user_id": 2,
+      "content": "这是一条回复",
+      "parent_id": 1,
+      "reply_to_user_id": 1,
+      "status": 1,
+      "create_time": "2024-01-15T10:35:45.000Z",
+      "author_name": "user1",
+      "author_nickname": "用户1",
+      "author_avatar": null,
+      "reply_to_name": "admin",
+      "reply_to_nickname": "管理员"
+    }
+  ]
+}
+```
+
+---
+
+### 3. 发表评论
+
+> **权限说明**：需要登录
+
+用户发表评论或回复。
+
+**请求**
+
+```
+POST /api/posts/{postId}/comments
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| postId | number | 是 | 帖子ID |
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| content | string | 是 | 评论内容（最多1000字符） |
+| parent_id | number | 否 | 父评论ID（回复时使用） |
+| reply_to_user_id | number | 否 | 回复的用户ID |
+
+**请求示例**
+
+```json
+{
+  "content": "这是一条评论"
+}
+```
+
+**回复评论示例**
+
+```json
+{
+  "content": "回复楼主",
+  "parent_id": 1,
+  "reply_to_user_id": 1
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "评论成功",
+  "data": {
+    "id": 1
+  }
+}
+```
+
+---
+
+### 4. 删除评论
+
+> **权限说明**：需要登录（评论作者或管理员）
+
+删除评论（软删除）。
+
+**请求**
+
+```
+DELETE /api/comments/{id}
+Authorization: Bearer {token}
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 评论ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "删除成功",
+  "data": {}
+}
+```
+
+---
+
+### 5. 获取我的评论
+
+> **权限说明**：需要登录
+
+获取当前用户发表的所有评论。
+
+**请求**
+
+```
+GET /api/user/comments
+Authorization: Bearer {token}
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码（默认1） |
+| pageSize | number | 否 | 每页数量（默认20） |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "post_id": 1,
+        "content": "这是一条评论",
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "post_title": "帖子标题"
+      }
+    ],
+    "pagination": {
+      "total": 10,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
 ## 错误码说明
 
 | HTTP状态码 | 说明 |
