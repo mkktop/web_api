@@ -273,6 +273,26 @@ Content-Type: application/json
 | gender | string | 否 | 性别（male/female/other） |
 | birthday | string | 否 | 生日（YYYY-MM-DD） |
 
+**请求示例：**
+```json
+{
+  "nickname": "新昵称",
+  "avatar": "https://example.com/avatar.jpg",
+  "signature": "这是我的个性签名",
+  "gender": "male",
+  "birthday": "1990-01-01"
+}
+```
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "更新成功",
+  "data": {}
+}
+```
+
 #### 修改密码
 ```
 PUT /api/user/password
@@ -853,6 +873,19 @@ Content-Type: application/json
 **权限说明：**
 - **仅超级管理员（ID=1）可以设置管理员角色**
 - 超级管理员不能被操作
+- **晋升管理员时自动奖励 10000 积分**
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "角色更新成功",
+  "data": {
+    "role": "admin",
+    "points_bonus": 10000
+  }
+}
+```
 
 ---
 

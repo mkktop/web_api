@@ -174,11 +174,22 @@ const updateUserRole = async (req, res) => {
       return response.error(res, '只有超级管理员可以设置管理员角色');
     }
     
+    const oldRole = user.role;
+    
     await User.updateRole(id, role);
     
-    logger.info(`超级管理员更新用户角色: 用户ID ${id}, 角色 ${role}`);
+    // 晋升管理员时奖励10000积分
+    if (oldRole !== 'admin' && role === 'admin') {
+      await UserAuth.addPoints(id, 10000);
+      logger.info(`超级管理员晋升用户为管理员: 用户ID ${id}, 奖励10000积分`);
+    } else {
+      logger.info(`超级管理员更新用户角色: 用户ID ${id}, 角色 ${role}`);
+    }
     
-    return response.success(res, {}, '角色更新成功');
+    return response.success(res, { 
+      role,
+      points_bonus: (oldRole !== 'admin' && role === 'admin') ? 10000 : 0
+    }, '角色更新成功');
     
   } catch (error) {
     logger.error('更新用户角色失败:', error.message);

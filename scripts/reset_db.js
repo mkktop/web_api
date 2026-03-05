@@ -73,7 +73,7 @@ const resetDatabase = async () => {
     
     // 重置管理员积分
     logger.info('重置管理员积分...');
-    await connection.query('UPDATE user_auth SET points = 1000 WHERE user_id = 1');
+    await connection.query('UPDATE user_auth SET points = 100000 WHERE user_id = 1');
     
     // 重置自增ID
     logger.info('重置自增ID...');
