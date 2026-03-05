@@ -35,6 +35,7 @@ const inviteCodeRoutes = require('./invite_code.routes');
 const categoryRoutes = require('./category.routes');
 const postRoutes = require('./post.routes');
 const commentRoutes = require('./comment.routes');
+const postInteractionRoutes = require('./post_interaction.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -71,6 +72,9 @@ router.use('/posts', postRoutes);
 
 // 评论路由（包含帖子评论和独立评论操作）
 router.use('/', commentRoutes);
+
+// 点赞收藏路由
+router.use('/', postInteractionRoutes);
 
 // 设备相关路由（待实现）
 // router.use('/device', deviceRoutes);

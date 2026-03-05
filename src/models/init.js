@@ -38,6 +38,7 @@ const UserAuth = require('./user_auth.model');
 const Category = require('./category.model');
 const Post = require('./post.model');
 const Comment = require('./comment.model');
+const PostInteraction = require('./post_interaction.model');
 
 /**
  * 创建数据库
@@ -113,6 +114,11 @@ const createTables = async () => {
   logger.info('创建评论表 (comment)...');
   await Comment.createTable();
   logger.info('评论表创建完成');
+  
+  // 8. 创建点赞收藏表
+  logger.info('创建点赞收藏表 (post_like, post_favorite)...');
+  await PostInteraction.createTables();
+  logger.info('点赞收藏表创建完成');
   
   logger.info('所有数据表创建完成！');
 };
