@@ -33,6 +33,7 @@ const systemRoutes = require('./system.routes');
 const authRoutes = require('./auth.routes');
 const inviteCodeRoutes = require('./invite_code.routes');
 const categoryRoutes = require('./category.routes');
+const postRoutes = require('./post.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -63,6 +64,9 @@ router.use('/invite-codes', inviteCodeRoutes);
 
 // 版块分类路由，前缀为 /categories（RESTful风格，使用复数）
 router.use('/categories', categoryRoutes);
+
+// 帖子路由，前缀为 /posts（RESTful风格，使用复数）
+router.use('/posts', postRoutes);
 
 // 设备相关路由（待实现）
 // router.use('/device', deviceRoutes);

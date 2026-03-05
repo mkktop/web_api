@@ -1,16 +1,18 @@
 # Web API 项目
 
-嵌入式设备管理后端API服务，用于对接嵌入式设备和个人网站，提供设备信息展示、OTA升级、用户管理等功能。
+嵌入式设备管理和论坛系统的后端API服务，用于对接嵌入式设备和个人网站，提供设备信息展示、OTA升级、用户管理、论坛等功能。
 
 ## 项目概述
 
 本项目是一个基于 Node.js + Express 构建的后端API服务，主要功能包括：
 
 - 用户注册与登录（邀请码机制）
+- 版块分类管理
+- 帖子发布与管理
+- 评论回复功能
 - 设备管理与监控
 - OTA固件升级
 - 系统信息查询
-- 设备时间同步
 
 ## 技术栈
 
@@ -44,9 +46,14 @@ web_api/
 │   │   ├── constants.js         # 常量定义
 │   │   └── README.md            # 模块文档
 │   ├── controllers/             # 控制器层
+│   │   ├── auth.controller.js   # 用户认证控制器
 │   │   ├── system.controller.js # 系统控制器
+│   │   ├── invite_code.controller.js # 邀请码控制器
+│   │   ├── category.controller.js # 版块分类控制器
+│   │   ├── post.controller.js   # 帖子控制器
 │   │   └── README.md            # 模块文档
 │   ├── middlewares/             # 中间件
+│   │   ├── auth.js              # 认证中间件
 │   │   ├── errorHandler.js      # 错误处理
 │   │   └── README.md            # 模块文档
 │   ├── models/                  # 数据模型层
@@ -55,16 +62,23 @@ web_api/
 │   │   ├── invite_code.model.js # 邀请码模型
 │   │   ├── user_profile.model.js# 用户资料模型
 │   │   ├── user_auth.model.js   # 用户权限模型
+│   │   ├── category.model.js    # 版块分类模型
+│   │   ├── post.model.js        # 帖子模型
 │   │   ├── init.js              # 数据库初始化
 │   │   ├── index.js             # 模型入口
 │   │   └── README.md            # 模块文档
 │   ├── routes/                  # 路由层
 │   │   ├── index.js             # 路由入口
+│   │   ├── auth.routes.js       # 认证路由
 │   │   ├── system.routes.js     # 系统路由
+│   │   ├── invite_code.routes.js# 邀请码路由
+│   │   ├── category.routes.js   # 版块分类路由
+│   │   ├── post.routes.js       # 帖子路由
 │   │   └── README.md            # 模块文档
 │   ├── utils/                   # 工具函数
 │   │   ├── logger.js            # 日志工具
 │   │   ├── response.js          # 响应格式化
+│   │   ├── jwt.js               # JWT工具
 │   │   └── README.md            # 模块文档
 │   └── app.js                   # 应用入口
 ├── uploads/                     # 上传文件目录（OTA固件）
@@ -116,6 +130,7 @@ npm run db:init
 初始化完成后会自动创建：
 - 默认管理员账号：`admin` / `admin123`
 - 初始邀请码（用于注册新用户）
+- 默认版块（综合讨论、技术交流、闲聊灌水）
 
 ### 4. 启动服务
 
@@ -140,6 +155,12 @@ curl http://localhost:3000/api/system/time
 
 # 获取系统信息
 curl http://localhost:3000/api/system/info
+
+# 获取版块列表
+curl http://localhost:3000/api/categories/active
+
+# 获取帖子列表
+curl http://localhost:3000/api/posts
 ```
 
 ## 数据库设计
@@ -191,38 +212,70 @@ curl http://localhost:3000/api/system/info
 | can_upload | TINYINT | 能否上传 |
 | can_comment | TINYINT | 能否评论 |
 
-### 表关系图
+### 版块分类表 (category)
 
-```
-┌─────────────────┐
-│     user        │ 主表
-├─────────────────┤
-│ id (PK)         │◄─────────────┐
-│ username        │              │
-│ password        │              │
-│ ...             │              │
-└─────────────────┘              │
-        │                        │
-        │ 1:1                    │ 1:N
-        ▼                        │
-┌─────────────────┐    ┌─────────────────┐
-│  user_profile   │    │  invite_code    │
-├─────────────────┤    ├─────────────────┤
-│ user_id (FK)    │    │ user_id (FK)    │
-│ signature       │    │ code            │
-│ ...             │    │ used            │
-└─────────────────┘    └─────────────────┘
-        │
-        │ 1:1
-        ▼
-┌─────────────────┐
-│   user_auth     │
-├─────────────────┤
-│ user_id (FK)    │
-│ points          │
-│ ...             │
-└─────────────────┘
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 版块ID（主键） |
+| name | VARCHAR(50) | 版块名称 |
+| description | VARCHAR(255) | 版块描述 |
+| icon | VARCHAR(255) | 版块图标 |
+| sort_order | INT | 排序 |
+| status | TINYINT | 状态：1启用 0禁用 |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+
+### 帖子表 (post)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 帖子ID（主键） |
+| title | VARCHAR(100) | 帖子标题 |
+| content | TEXT | 帖子内容 |
+| user_id | INT | 作者ID |
+| category_id | INT | 版块ID |
+| views | INT | 浏览量 |
+| likes | INT | 点赞数 |
+| comments | INT | 评论数 |
+| is_pinned | TINYINT | 是否置顶 |
+| is_highlighted | TINYINT | 是否加精 |
+| status | TINYINT | 状态：1正常 0删除 2审核中 |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+
+## API概览
+
+### 已实现接口
+
+| 模块 | 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|------|
+| 系统 | GET | /api/system/time | 获取服务器时间 | 公开 |
+| 系统 | GET | /api/system/info | 获取系统信息 | 公开 |
+| 认证 | POST | /api/register | 用户注册 | 公开 |
+| 认证 | POST | /api/login | 用户登录 | 公开 |
+| 认证 | GET | /api/user/info | 获取用户信息 | 登录 |
+| 认证 | PUT | /api/user/profile | 更新用户资料 | 登录 |
+| 认证 | PUT | /api/user/password | 修改密码 | 登录 |
+| 邀请码 | POST | /api/invite-codes | 批量生成邀请码 | admin |
+| 邀请码 | GET | /api/invite-codes | 查询邀请码列表 | admin |
+| 邀请码 | GET | /api/invite-codes/stats | 获取邀请码统计 | admin |
+| 邀请码 | DELETE | /api/invite-codes/:id | 删除邀请码 | admin |
+| 版块 | GET | /api/categories/active | 获取启用的版块列表 | 公开 |
+| 版块 | GET | /api/categories/:id | 获取版块详情 | 公开 |
+| 版块 | POST | /api/categories | 创建版块 | admin |
+| 版块 | PUT | /api/categories/:id | 更新版块 | admin |
+| 版块 | DELETE | /api/categories/:id | 删除版块 | admin |
+| 帖子 | GET | /api/posts | 获取帖子列表 | 公开 |
+| 帖子 | GET | /api/posts/:id | 获取帖子详情 | 公开 |
+| 帖子 | GET | /api/posts/stats | 获取帖子统计 | 公开 |
+| 帖子 | POST | /api/posts | 发布帖子 | 登录 |
+| 帖子 | GET | /api/posts/my | 获取我的帖子 | 登录 |
+| 帖子 | PUT | /api/posts/:id | 更新帖子 | 作者/管理员 |
+| 帖子 | DELETE | /api/posts/:id | 删除帖子 | 作者/管理员 |
+| 帖子 | PUT | /api/posts/:id/pin | 置顶帖子 | admin |
+| 帖子 | PUT | /api/posts/:id/highlight | 加精帖子 | admin |
+
+详细API文档请查看 [API文档](docs/API.md)
 
 ## 用户注册流程
 
@@ -237,32 +290,6 @@ curl http://localhost:3000/api/system/info
    ↓
 5. 标记邀请码为已使用
 ```
-
-## API概览
-
-### 已实现接口
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | / | API列表 |
-| GET | /api/system/time | 获取服务器时间 |
-| GET | /api/system/info | 获取系统信息 |
-
-### 待实现接口
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/auth/register | 用户注册 |
-| POST | /api/auth/login | 用户登录 |
-| GET | /api/user/profile | 获取用户资料 |
-| PUT | /api/user/profile | 更新用户资料 |
-| POST | /api/device/register | 设备注册 |
-| POST | /api/device/heartbeat | 设备心跳 |
-| GET | /api/device/list | 设备列表 |
-| POST | /api/ota/upload | 上传固件 |
-| GET | /api/ota/check/:deviceId | 检查更新 |
-
-详细API文档请查看 [API文档](docs/API.md)
 
 ## 部署
 
@@ -305,7 +332,7 @@ npm run pm2:monit    # 监控面板
 ### 分层架构
 
 ```
-请求 → 路由(Routes) → 控制器(Controller) → 服务(Service) → 数据模型(Model)
+请求 → 路由(Routes) → 控制器(Controller) → 数据模型(Model)
                      ↓
                    响应(Response)
 ```
@@ -314,7 +341,6 @@ npm run pm2:monit    # 监控面板
 
 - **路由层 (Routes)**：定义URL路径与处理函数的映射
 - **控制器层 (Controllers)**：处理请求参数，调用业务逻辑，返回响应
-- **服务层 (Services)**：封装业务逻辑（待实现）
 - **模型层 (Models)**：定义数据结构和数据库操作
 - **中间件 (Middlewares)**：处理跨域、认证、错误等
 - **工具层 (Utils)**：提供日志、响应格式化等工具函数
@@ -398,8 +424,13 @@ npm run db:init
 
 - [x] 数据库集成
 - [x] 用户表设计
-- [ ] 用户注册与登录API
-- [ ] JWT认证中间件
+- [x] 用户注册与登录API
+- [x] JWT认证中间件
+- [x] 邀请码管理
+- [x] 版块分类管理
+- [x] 帖子管理
+- [ ] 评论回复功能
+- [ ] 点赞收藏功能
 - [ ] 设备注册与管理
 - [ ] 设备心跳检测
 - [ ] OTA固件升级

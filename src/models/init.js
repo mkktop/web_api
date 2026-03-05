@@ -36,6 +36,7 @@ const InviteCode = require('./invite_code.model');
 const UserProfile = require('./user_profile.model');
 const UserAuth = require('./user_auth.model');
 const Category = require('./category.model');
+const Post = require('./post.model');
 
 /**
  * 创建数据库
@@ -101,6 +102,11 @@ const createTables = async () => {
   logger.info('创建版块分类表 (category)...');
   await Category.createTable();
   logger.info('版块分类表创建完成');
+  
+  // 6. 创建帖子表
+  logger.info('创建帖子表 (post)...');
+  await Post.createTable();
+  logger.info('帖子表创建完成');
   
   logger.info('所有数据表创建完成！');
 };

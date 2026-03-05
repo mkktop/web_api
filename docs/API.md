@@ -1059,6 +1059,363 @@ Authorization: Bearer {token}
 
 ---
 
+## 帖子管理接口
+
+### 1. 获取帖子列表
+
+获取帖子列表，支持筛选和分页。
+
+**请求**
+
+```
+GET /api/posts?page=1&pageSize=10&category_id=1&keyword=关键词&orderBy=latest
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码（默认1） |
+| pageSize | number | 否 | 每页数量（默认20，最大50） |
+| category_id | number | 否 | 按版块筛选 |
+| keyword | string | 否 | 按标题搜索 |
+| orderBy | string | 否 | 排序方式（latest/popular/pinned） |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "title": "我的第一篇帖子",
+        "summary": "帖子内容摘要...",
+        "user_id": 1,
+        "category_id": 1,
+        "views": 100,
+        "likes": 10,
+        "comments": 5,
+        "is_pinned": 0,
+        "is_highlighted": 0,
+        "create_time": "2024-01-15T10:30:45.000Z",
+        "author_name": "admin",
+        "author_nickname": "管理员",
+        "category_name": "综合讨论"
+      }
+    ],
+    "pagination": {
+      "total": 100,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 5
+    }
+  }
+}
+```
+
+---
+
+### 2. 获取帖子详情
+
+根据ID获取帖子详细信息，并增加浏览量。
+
+**请求**
+
+```
+GET /api/posts/{id}
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 帖子ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "id": 1,
+    "title": "我的第一篇帖子",
+    "content": "帖子完整内容...",
+    "user_id": 1,
+    "category_id": 1,
+    "views": 101,
+    "likes": 10,
+    "comments": 5,
+    "is_pinned": 0,
+    "is_highlighted": 0,
+    "status": 1,
+    "create_time": "2024-01-15T10:30:45.000Z",
+    "update_time": "2024-01-15T10:30:45.000Z",
+    "author_name": "admin",
+    "author_nickname": "管理员",
+    "author_avatar": null,
+    "category_name": "综合讨论"
+  }
+}
+```
+
+---
+
+### 3. 发布帖子
+
+> **权限说明**：需要登录
+
+用户发布新帖子。
+
+**请求**
+
+```
+POST /api/posts
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| title | string | 是 | 帖子标题（最多100字符） |
+| content | string | 是 | 帖子内容 |
+| category_id | number | 是 | 版块ID |
+
+**请求示例**
+
+```json
+{
+  "title": "我的第一篇帖子",
+  "content": "这是帖子的内容...",
+  "category_id": 1
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "发布成功",
+  "data": {
+    "id": 1
+  }
+}
+```
+
+---
+
+### 4. 更新帖子
+
+> **权限说明**：需要登录（帖子作者或管理员）
+
+用户编辑自己的帖子。
+
+**请求**
+
+```
+PUT /api/posts/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 帖子ID |
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| title | string | 否 | 帖子标题 |
+| content | string | 否 | 帖子内容 |
+| category_id | number | 否 | 版块ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "更新成功",
+  "data": {}
+}
+```
+
+---
+
+### 5. 删除帖子
+
+> **权限说明**：需要登录（帖子作者或管理员）
+
+删除帖子（软删除）。
+
+**请求**
+
+```
+DELETE /api/posts/{id}
+Authorization: Bearer {token}
+```
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 帖子ID |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "删除成功",
+  "data": {}
+}
+```
+
+---
+
+### 6. 获取我的帖子
+
+> **权限说明**：需要登录
+
+获取当前用户发布的帖子列表。
+
+**请求**
+
+```
+GET /api/posts/my
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [...],
+    "pagination": {...}
+  }
+}
+```
+
+---
+
+### 7. 获取帖子统计
+
+获取帖子统计数据。
+
+**请求**
+
+```
+GET /api/posts/stats
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "total": 100,
+    "normal": 95,
+    "deleted": 3,
+    "pending": 2
+  }
+}
+```
+
+---
+
+### 8. 置顶/取消置顶帖子
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员置顶或取消置顶帖子。
+
+**请求**
+
+```
+PUT /api/posts/{id}/pin
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| is_pinned | number | 是 | 是否置顶（1是/0否） |
+
+**请求示例**
+
+```json
+{
+  "is_pinned": 1
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "已置顶",
+  "data": {}
+}
+```
+
+---
+
+### 9. 加精/取消加精帖子
+
+> **权限说明**：仅限 admin 角色访问
+
+管理员加精或取消加精帖子。
+
+**请求**
+
+```
+PUT /api/posts/{id}/highlight
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| is_highlighted | number | 是 | 是否加精（1是/0否） |
+
+**请求示例**
+
+```json
+{
+  "is_highlighted": 1
+}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "已加精",
+  "data": {}
+}
+```
+
+---
+
 ## 错误码说明
 
 | HTTP状态码 | 说明 |
