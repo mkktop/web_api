@@ -1715,3 +1715,464 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 | POST | /api/ota/upload | 上传固件 |
 | GET | /api/ota/check/:deviceId | 检查更新 |
 | POST | /api/ota/report | 上报升级结果 |
+
+---
+
+## 点赞收藏接口
+
+### 1. 点赞帖子
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+POST /api/posts/{id}/like
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "点赞成功",
+  "data": { "id": 1 }
+}
+```
+
+---
+
+### 2. 取消点赞
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+DELETE /api/posts/{id}/like
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "取消点赞成功",
+  "data": {}
+}
+```
+
+---
+
+### 3. 收藏帖子
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+POST /api/posts/{id}/favorite
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "收藏成功",
+  "data": { "id": 1 }
+}
+```
+
+---
+
+### 4. 取消收藏
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+DELETE /api/posts/{id}/favorite
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "取消收藏成功",
+  "data": {}
+}
+```
+
+---
+
+### 5. 获取点赞收藏状态
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/posts/{id}/status
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "liked": true,
+    "favorited": false
+  }
+}
+```
+
+---
+
+### 6. 获取我点赞的帖子
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/user/likes?page=1&pageSize=20
+Authorization: Bearer {token}
+```
+
+---
+
+### 7. 获取我收藏的帖子
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/user/favorites?page=1&pageSize=20
+Authorization: Bearer {token}
+```
+
+---
+
+## 签到积分接口
+
+### 1. 签到
+
+> **权限说明**：需要登录
+
+用户每日签到获得20积分，连续签到有额外奖励。
+
+**请求**
+
+```
+POST /api/sign-in
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "签到成功",
+  "data": {
+    "points_earned": 20,
+    "continuous_days": 1,
+    "bonus": 0
+  }
+}
+```
+
+**连续签到奖励：**
+- 连续7天：额外10积分
+- 连续14天：额外20积分
+- 连续30天：额外50积分
+
+---
+
+### 2. 获取签到状态
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/sign-in/status
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "has_signed_today": true,
+    "total_days": 10,
+    "total_points": 200,
+    "max_continuous_days": 5,
+    "current_continuous_days": 3,
+    "monthly_dates": ["2024-01-01", "2024-01-02"]
+  }
+}
+```
+
+---
+
+### 3. 获取签到记录
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/sign-in/records?page=1&pageSize=30
+Authorization: Bearer {token}
+```
+
+---
+
+### 4. 获取积分信息
+
+> **权限说明**：需要登录
+
+**请求**
+
+```
+GET /api/sign-in/points
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "points": 150,
+    "can_exchange": true,
+    "exchange_cost": 50
+  }
+}
+```
+
+---
+
+### 5. 兑换邀请码
+
+> **权限说明**：需要登录
+
+使用50积分兑换一个邀请码。
+
+**请求**
+
+```
+POST /api/sign-in/points/exchange
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "兑换成功",
+  "data": {
+    "code": "abc123def456",
+    "points_cost": 50,
+    "remaining_points": 100
+  }
+}
+```
+
+---
+
+## 管理员接口
+
+> **权限说明**：所有接口仅限 admin 角色访问
+
+### 1. 获取统计面板
+
+**请求**
+
+```
+GET /api/admin/dashboard
+Authorization: Bearer {token}
+```
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "overview": {
+      "total_users": 100,
+      "total_posts": 500,
+      "total_comments": 2000,
+      "total_categories": 5
+    },
+    "today": {
+      "new_users": 5,
+      "new_posts": 20,
+      "new_comments": 100
+    },
+    "users": { "total": 100, "active": 95, "disabled": 5, "admins": 2 },
+    "posts": { "total": 500, "normal": 480, "deleted": 10, "pending": 10 },
+    "invite_codes": { "total": 50, "used": 30, "unused": 20 },
+    "hot_posts": [...]
+  }
+}
+```
+
+---
+
+### 2. 获取用户列表
+
+**请求**
+
+```
+GET /api/admin/users?page=1&pageSize=20&role=user&status=1&keyword=xxx
+Authorization: Bearer {token}
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码 |
+| pageSize | number | 否 | 每页数量 |
+| role | string | 否 | 按角色筛选（user/admin） |
+| status | number | 否 | 按状态筛选（0/1） |
+| keyword | string | 否 | 按用户名搜索 |
+
+---
+
+### 3. 获取用户详情
+
+**请求**
+
+```
+GET /api/admin/users/{id}
+Authorization: Bearer {token}
+```
+
+---
+
+### 4. 更新用户状态
+
+**请求**
+
+```
+PUT /api/admin/users/{id}/status
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+```json
+{ "status": 0 }
+```
+
+---
+
+### 5. 更新用户角色
+
+**请求**
+
+```
+PUT /api/admin/users/{id}/role
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+```json
+{ "role": "admin" }
+```
+
+---
+
+### 6. 获取所有帖子（管理员）
+
+**请求**
+
+```
+GET /api/admin/posts?status=0
+Authorization: Bearer {token}
+```
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码 |
+| pageSize | number | 否 | 每页数量 |
+| category_id | number | 否 | 按版块筛选 |
+| user_id | number | 否 | 按作者筛选 |
+| status | number | 否 | 按状态筛选（0删除/1正常/2审核中） |
+| keyword | string | 否 | 按标题搜索 |
+
+---
+
+### 7. 更新帖子状态
+
+**请求**
+
+```
+PUT /api/admin/posts/{id}/status
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**请求参数**
+
+```json
+{ "status": 1 }
+```
+
+**状态值说明：**
+- 0：已删除
+- 1：正常
+- 2：审核中
+
+---
+
+### 8. 获取所有评论（管理员）
+
+**请求**
+
+```
+GET /api/admin/comments?page=1&pageSize=20
+Authorization: Bearer {token}
+```
+
+---
+
+### 9. 删除评论（管理员）
+
+**请求**
+
+```
+DELETE /api/admin/comments/{id}
+Authorization: Bearer {token}
+```
+
+---
+
+## 待实现接口

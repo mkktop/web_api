@@ -274,6 +274,23 @@ curl http://localhost:3000/api/posts
 | 帖子 | DELETE | /api/posts/:id | 删除帖子 | 作者/管理员 |
 | 帖子 | PUT | /api/posts/:id/pin | 置顶帖子 | admin |
 | 帖子 | PUT | /api/posts/:id/highlight | 加精帖子 | admin |
+| 评论 | GET | /api/posts/:postId/comments | 获取帖子评论 | 公开 |
+| 评论 | GET | /api/comments/:commentId/replies | 获取评论回复 | 公开 |
+| 评论 | POST | /api/posts/:postId/comments | 发表评论 | 登录 |
+| 评论 | DELETE | /api/comments/:id | 删除评论 | 作者/管理员 |
+| 点赞 | POST | /api/posts/:id/like | 点赞帖子 | 登录 |
+| 点赞 | DELETE | /api/posts/:id/like | 取消点赞 | 登录 |
+| 收藏 | POST | /api/posts/:id/favorite | 收藏帖子 | 登录 |
+| 收藏 | DELETE | /api/posts/:id/favorite | 取消收藏 | 登录 |
+| 签到 | POST | /api/sign-in | 每日签到 | 登录 |
+| 签到 | GET | /api/sign-in/status | 获取签到状态 | 登录 |
+| 积分 | GET | /api/sign-in/points | 获取积分信息 | 登录 |
+| 积分 | POST | /api/sign-in/points/exchange | 兑换邀请码 | 登录 |
+| 管理员 | GET | /api/admin/dashboard | 统计面板 | admin |
+| 管理员 | GET | /api/admin/users | 用户列表 | admin |
+| 管理员 | PUT | /api/admin/users/:id/status | 启用/禁用用户 | admin |
+| 管理员 | GET | /api/admin/posts | 帖子列表（含已删除） | admin |
+| 管理员 | DELETE | /api/admin/comments/:id | 删除评论 | admin |
 
 详细API文档请查看 [API文档](docs/API.md)
 
@@ -429,8 +446,11 @@ npm run db:init
 - [x] 邀请码管理
 - [x] 版块分类管理
 - [x] 帖子管理
-- [ ] 评论回复功能
-- [ ] 点赞收藏功能
+- [x] 评论回复功能
+- [x] 点赞收藏功能
+- [x] 签到积分系统
+- [x] 积分兑换邀请码
+- [x] 管理员后台接口
 - [ ] 设备注册与管理
 - [ ] 设备心跳检测
 - [ ] OTA固件升级
