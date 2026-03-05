@@ -312,6 +312,90 @@ const Comment = {
   deleteByPostId: async (postId) => {
     const sql = 'UPDATE comment SET status = 0 WHERE post_id = ?';
     return await db.update(sql, [postId]);
+  },
+
+  /**
+   * 获取所有评论（管理员）
+   * @description 管理员查询所有评论，支持筛选和分页
+   * 
+   * @param {Object} options - 查询选项
+   * @returns {Promise<Object>} 包含列表和分页信息的对象
+   */
+  findAll: async (options = {}) => {
+    const { page = 1, pageSize = 20, post_id, user_id, status } = options;
+    const offset = (page - 1) * pageSize;
+    
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+    
+    if (post_id) {
+      whereClause += ' AND c.post_id = ?';
+      params.push(parseInt(post_id));
+    }
+    
+    if (user_id) {
+      whereClause += ' AND c.user_id = ?';
+      params.push(parseInt(user_id));
+    }
+    
+    if (status !== undefined && status !== null && status !== '') {
+      whereClause += ' AND c.status = ?';
+      params.push(parseInt(status));
+    }
+    
+    const countSql = `SELECT COUNT(*) as total FROM comment c ${whereClause}`;
+    const countRows = await db.query(countSql, params);
+    const total = countRows[0].total;
+    
+    const listSql = `
+      SELECT 
+        c.*,
+        u.username as author_name,
+        u.nickname as author_nickname,
+        p.title as post_title
+      FROM comment c
+      LEFT JOIN user u ON c.user_id = u.id
+      LEFT JOIN post p ON c.post_id = p.id
+      ${whereClause}
+      ORDER BY c.create_time DESC
+      LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}
+    `;
+    const list = await db.query(listSql, params);
+    
+    return {
+      list,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    };
+  },
+
+  /**
+   * 统计所有评论数
+   * @description 统计所有正常状态的评论总数
+   * 
+   * @returns {Promise<number>} 评论总数
+   */
+  countAll: async () => {
+    const sql = 'SELECT COUNT(*) as count FROM comment WHERE status = 1';
+    const rows = await db.query(sql);
+    return rows[0].count;
+  },
+
+  /**
+   * 按日期统计新评论数
+   * @description 统计指定日期之后的新评论数
+   * 
+   * @param {Date} date - 起始日期
+   * @returns {Promise<number>} 新评论数
+   */
+  countByDate: async (date) => {
+    const sql = 'SELECT COUNT(*) as count FROM comment WHERE create_time >= ? AND status = 1';
+    const rows = await db.query(sql, [date]);
+    return rows[0].count;
   }
 };
 

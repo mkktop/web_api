@@ -434,6 +434,19 @@ const Post = {
     const sql = 'SELECT 1 FROM post WHERE id = ? AND user_id = ? LIMIT 1';
     const rows = await db.query(sql, [postId, userId]);
     return rows.length > 0;
+  },
+
+  /**
+   * 按日期统计新帖子数
+   * @description 统计指定日期之后的新帖子数
+   * 
+   * @param {Date} date - 起始日期
+   * @returns {Promise<number>} 新帖子数
+   */
+  countByDate: async (date) => {
+    const sql = 'SELECT COUNT(*) as count FROM post WHERE create_time >= ? AND status = 1';
+    const rows = await db.query(sql, [date]);
+    return rows[0].count;
   }
 };
 

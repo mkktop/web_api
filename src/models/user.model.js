@@ -363,6 +363,45 @@ const User = {
     const sql = 'SELECT 1 FROM user WHERE email = ? LIMIT 1';
     const rows = await db.query(sql, [email]);
     return rows.length > 0;
+  },
+
+  /**
+   * 更新用户状态
+   * @description 管理员启用/禁用用户
+   * 
+   * @param {number} id - 用户ID
+   * @param {number} status - 状态（1启用/0禁用）
+   * @returns {Promise<number>} 影响的行数
+   */
+  updateStatus: async (id, status) => {
+    const sql = 'UPDATE user SET status = ? WHERE id = ?';
+    return await db.update(sql, [status, id]);
+  },
+
+  /**
+   * 更新用户角色
+   * @description 管理员设置用户角色
+   * 
+   * @param {number} id - 用户ID
+   * @param {string} role - 角色（user/admin）
+   * @returns {Promise<number>} 影响的行数
+   */
+  updateRole: async (id, role) => {
+    const sql = 'UPDATE user SET role = ? WHERE id = ?';
+    return await db.update(sql, [role, id]);
+  },
+
+  /**
+   * 按日期统计新用户数
+   * @description 统计指定日期之后的新用户数
+   * 
+   * @param {Date} date - 起始日期
+   * @returns {Promise<number>} 新用户数
+   */
+  countByDate: async (date) => {
+    const sql = 'SELECT COUNT(*) as count FROM user WHERE create_time >= ?';
+    const rows = await db.query(sql, [date]);
+    return rows[0].count;
   }
 };
 
