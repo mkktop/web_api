@@ -18,6 +18,7 @@ const Category = require('./category.model');
 const Post = require('./post.model');
 const Comment = require('./comment.model');
 const PostInteraction = require('./post_interaction.model');
+const SignIn = require('./sign_in.model');
 
 module.exports = {
   // 数据库操作
@@ -45,5 +46,8 @@ module.exports = {
   Comment,
   
   // 点赞收藏模型
-  PostInteraction
+  PostInteraction,
+  
+  // 签到模型
+  SignIn
 };

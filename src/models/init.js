@@ -39,6 +39,7 @@ const Category = require('./category.model');
 const Post = require('./post.model');
 const Comment = require('./comment.model');
 const PostInteraction = require('./post_interaction.model');
+const SignIn = require('./sign_in.model');
 
 /**
  * 创建数据库
@@ -119,6 +120,11 @@ const createTables = async () => {
   logger.info('创建点赞收藏表 (post_like, post_favorite)...');
   await PostInteraction.createTables();
   logger.info('点赞收藏表创建完成');
+  
+  // 9. 创建签到表
+  logger.info('创建签到表 (sign_in)...');
+  await SignIn.createTable();
+  logger.info('签到表创建完成');
   
   logger.info('所有数据表创建完成！');
 };

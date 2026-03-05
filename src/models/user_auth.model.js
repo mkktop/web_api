@@ -197,6 +197,19 @@ const UserAuth = {
   },
 
   /**
+   * 扣除积分
+   * @description 扣除用户积分（确保不会变成负数）
+   * 
+   * @param {number} userId - 用户ID
+   * @param {number} amount - 扣除的积分数量
+   * @returns {Promise<number>} 影响的行数
+   */
+  deductPoints: async (userId, amount) => {
+    const sql = 'UPDATE user_auth SET points = GREATEST(0, points - ?) WHERE user_id = ?';
+    return await db.update(sql, [amount, userId]);
+  },
+
+  /**
    * 设置积分
    * @description 直接设置用户的积分值
    * 
