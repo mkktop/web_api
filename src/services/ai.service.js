@@ -14,7 +14,8 @@ const AI_CONFIG = {
   apiKey: 'sk-2VkbLll2uyWhcBduqKmTx0nq0uxttxoYUBelndI4HZ6duET8CPF7M0pR8wy5xfdn',
   botUserId: 4,
   maxRetries: 3,
-  timeout: 30000
+  timeout: 30000,
+  retryDelay: 5000
 };
 
 // 免费模型列表（优先级从高到低）
@@ -170,6 +171,12 @@ const callAIWithRetry = async (prompt, context = null) => {
     
     currentModelIndex = (currentModelIndex + 1) % availableModels.length;
     logger.info(`切换到模型: ${availableModels[currentModelIndex]}`);
+    
+    // 等待一段时间再重试
+    if (attempt < AI_CONFIG.maxRetries - 1) {
+      logger.info(`等待 ${AI_CONFIG.retryDelay / 1000} 秒后重试...`);
+      await new Promise(resolve => setTimeout(resolve, AI_CONFIG.retryDelay));
+    }
     
     if (attempt === availableModels.length - 1) {
       await fetchAvailableModels();
