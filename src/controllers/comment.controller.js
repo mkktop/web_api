@@ -20,6 +20,12 @@ const Comment = require('../models/comment.model');
 // 引入帖子模型
 const Post = require('../models/post.model');
 
+// 引入用户模型
+const User = require('../models/user.model');
+
+// 引入AI服务
+const AIService = require('../services/ai.service');
+
 // 引入响应工具函数
 const response = require('../utils/response');
 
@@ -161,6 +167,47 @@ const create = async (req, res) => {
     await Post.incrementComments(postId);
     
     logger.info(`用户发表评论: 帖子 ${postId}, 评论ID ${commentId}`);
+    
+    // ==================== 触发AI回复 ====================
+    setImmediate(async () => {
+      try {
+        const botUserId = AIService.getBotUserId();
+        
+        if (userId === botUserId) {
+          return;
+        }
+        
+        const post = await Post.findById(postId);
+        if (!post) return;
+        
+        const previousComments = await Comment.findByPostId(postId, { pageSize: 10 });
+        
+        const commenter = await User.findById(userId);
+        const commenterName = commenter ? (commenter.nickname || commenter.username) : '用户';
+        
+        const aiReply = await AIService.generateReplyComment(
+          post.title,
+          post.content,
+          content,
+          commenterName,
+          previousComments.list
+        );
+        
+        if (aiReply) {
+          await Comment.create({
+            post_id: postId,
+            user_id: botUserId,
+            content: aiReply,
+            parent_id: parent_id || null
+          });
+          
+          await Post.incrementComments(postId);
+          logger.info(`AI自动回复成功: 帖子ID ${postId}`);
+        }
+      } catch (error) {
+        logger.error('AI自动回复失败:', error.message);
+      }
+    });
     
     return response.success(res, { id: commentId }, '评论成功');
     

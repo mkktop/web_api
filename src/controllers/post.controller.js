@@ -21,6 +21,9 @@ const Post = require('../models/post.model');
 // 引入版块模型
 const Category = require('../models/category.model');
 
+// 引入用户模型
+const User = require('../models/user.model');
+
 // 引入评论模型
 const Comment = require('../models/comment.model');
 
@@ -170,30 +173,28 @@ const create = async (req, res) => {
     logger.info(`用户发布帖子: ${title} (ID: ${postId}, 作者: ${userId})`);
     
     // ==================== 触发AI自动评论 ====================
-    // 异步执行，不阻塞响应
     setImmediate(async () => {
       try {
-        // 检查发帖者是否是机器人（避免机器人自己评论自己）
         const botUserId = AIService.getBotUserId();
+        
         if (userId === botUserId) {
           logger.info('机器人发帖，跳过AI评论');
           return;
         }
         
-        // 生成AI评论
-        const aiComment = await AIService.generateComment(title, content);
+        const author = await User.findById(userId);
+        const authorName = author ? (author.nickname || author.username) : '用户';
+        
+        const aiComment = await AIService.generatePostComment(title, content, authorName);
         
         if (aiComment) {
-          // 创建评论
           await Comment.create({
             post_id: postId,
             user_id: botUserId,
             content: aiComment
           });
           
-          // 更新帖子评论数
           await Post.incrementComments(postId);
-          
           logger.info(`AI自动评论成功: 帖子ID ${postId}`);
         }
       } catch (error) {
