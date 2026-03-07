@@ -1,26 +1,12 @@
 /**
- * @fileoverview 认证相关路由
- * @description 定义用户注册、登录、获取信息等认证相关的路由
- * 
- * 路由列表：
- * - POST /register     - 用户注册
- * - POST /login        - 用户登录
- * - GET  /user/info    - 获取当前用户信息（需要认证）
- * - PUT  /user/profile - 更新用户资料（需要认证）
- * - PUT  /user/password - 修改密码（需要认证）
+ * @fileoverview 认证路由
+ * @description 用户注册、登录、信息获取等路由
  */
 
-// 引入 Express 框架
 const express = require('express');
-
-// 创建路由器实例
 const router = express.Router();
-
-// 引入控制器
 const authController = require('../controllers/auth.controller');
-
-// 引入认证中间件
-const { authMiddleware } = require('../middlewares/auth');
+const authMiddleware = require('../middlewares/auth');
 
 /**
  * 用户注册
@@ -62,6 +48,7 @@ router.get('/user/info', authMiddleware, authController.getUserInfo);
  * @group 用户 - 用户信息相关接口
  * @security JWT
  * @param {string} nickname.body - 昵称
+ * @param {string} avatar.body - 头像URL
  * @param {string} signature.body - 个性签名
  * @param {string} gender.body - 性别
  * @param {string} birthday.body - 生日
@@ -78,10 +65,30 @@ router.put('/user/profile', authMiddleware, authController.updateProfile);
  * @param {string} oldPassword.body.required - 旧密码
  * @param {string} newPassword.body.required - 新密码（至少6位）
  * @returns {object} 200 - 密码修改成功
- * @returns {object} 400 - 旧密码错误或参数错误
  * @returns {object} 401 - 未登录或 Token 过期
  */
 router.put('/user/password', authMiddleware, authController.changePassword);
 
-// 导出路由器
+/**
+ * 获取用户公开信息
+ * @route GET /users/:id
+ * @group 用户 - 用户信息相关接口
+ * @param {number} id.path.required - 用户ID
+ * @returns {object} 200 - 用户公开信息
+ * @returns {object} 404 - 用户不存在
+ */
+router.get('/users/:id', authController.getPublicInfo);
+
+/**
+ * 获取用户帖子列表
+ * @route GET /users/:id/posts
+ * @group 用户 - 用户信息相关接口
+ * @param {number} id.path.required - 用户ID
+ * @param {number} page.query - 页码
+ * @param {number} pageSize.query - 每页数量
+ * @returns {object} 200 - 帖子列表
+ * @returns {object} 404 - 用户不存在
+ */
+router.get('/users/:id/posts', authController.getUserPosts);
+
 module.exports = router;

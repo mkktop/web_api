@@ -450,11 +450,94 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * 获取用户公开信息
+ * @description 获取用户的公开信息（不需要登录）
+ * 
+ * @param {Object} req - Express 请求对象
+ * @param {Object} req.params - 路由参数
+ * @param {number} req.params.id - 用户ID
+ * @param {Object} res - Express 响应对象
+ */
+const getPublicInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await User.findById(id);
+    if (!user) {
+      return response.error(res, '用户不存在', HttpStatus.NOT_FOUND);
+    }
+    
+    const profile = await UserProfile.findByUserId(id);
+    const auth = await UserAuth.findByUserId(id);
+    
+    const publicInfo = {
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname || user.username,
+      avatar: user.avatar,
+      role: user.role,
+      create_time: user.create_time,
+      signature: profile?.signature || null,
+      gender: profile?.gender || null,
+      birthday: profile?.birthday || null,
+      points: auth?.points || 0
+    };
+    
+    return response.success(res, publicInfo, '获取成功');
+    
+  } catch (error) {
+    logger.error('获取用户公开信息失败:', error.message);
+    return response.error(res, '获取失败', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * 获取用户帖子列表
+ * @description 获取用户发布的帖子列表（不需要登录）
+ * 
+ * @param {Object} req - Express 请求对象
+ * @param {Object} req.params - 路由参数
+ * @param {number} req.params.id - 用户ID
+ * @param {Object} req.query - 查询参数
+ * @param {number} req.query.page - 页码
+ * @param {number} req.query.pageSize - 每页数量
+ * @param {Object} res - Express 响应对象
+ */
+const getUserPosts = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, pageSize = 20 } = req.query;
+    
+    const user = await User.findById(id);
+    if (!user) {
+      return response.error(res, '用户不存在', HttpStatus.NOT_FOUND);
+    }
+    
+    const Post = require('../models/post.model');
+    
+    const result = await Post.findAll({
+      page: parseInt(page),
+      pageSize: Math.min(parseInt(pageSize) || 20, 50),
+      user_id: id,
+      status: 1
+    });
+    
+    return response.success(res, result, '获取成功');
+    
+  } catch (error) {
+    logger.error('获取用户帖子失败:', error.message);
+    return response.error(res, '获取失败', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
 // 导出控制器函数
 module.exports = {
   register,
   login,
   getUserInfo,
   updateProfile,
-  changePassword
+  changePassword,
+  getPublicInfo,
+  getUserPosts
 };

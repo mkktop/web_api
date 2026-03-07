@@ -305,6 +305,76 @@ Content-Type: application/json
 | old_password | string | 是 | 原密码 |
 | new_password | string | 是 | 新密码 |
 
+#### 获取用户公开信息（公开）
+```
+GET /api/users/{id}
+```
+**路径参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 用户ID |
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "nickname": "管理员",
+    "avatar": null,
+    "role": "admin",
+    "create_time": "2024-01-01T00:00:00.000Z",
+    "signature": "这是个性签名",
+    "gender": "male",
+    "birthday": "1990-01-01",
+    "points": 100000
+  }
+}
+```
+
+#### 获取用户帖子列表（公开）
+```
+GET /api/users/{id}/posts?page=1&pageSize=20
+```
+**路径参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | number | 是 | 用户ID |
+
+**查询参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | number | 否 | 页码，默认1 |
+| pageSize | number | 否 | 每页数量，默认20，最大50 |
+
+**成功响应：**
+```json
+{
+  "success": true,
+  "message": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "title": "帖子标题",
+        "content": "帖子内容...",
+        "category_id": 1,
+        "category_name": "综合讨论",
+        "view_count": 100,
+        "like_count": 10,
+        "comment_count": 5,
+        "create_time": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 20
+  }
+}
+```
+
 ---
 
 ### 5.3 版块接口

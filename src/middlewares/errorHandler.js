@@ -23,6 +23,9 @@ const response = require('../utils/response');
 // 引入HTTP状态码常量
 const HttpStatus = require('../config/constants');
 
+// 引入 winston logger
+const logger = require('../utils/logger');
+
 /**
  * 404处理中间件
  * @description 当请求没有匹配到任何路由时，这个中间件会被调用
@@ -69,9 +72,14 @@ const notFound = (req, res, next) => {
  * // { success: false, message: '数据库连接失败', timestamp: '...' }
  */
 const errorHandler = (err, req, res, next) => {
-  // err.stack 包含错误的调用堆栈信息
-  // 这对于调试非常有用，可以看到错误是在哪里发生的
-  console.error(err.stack);
+  // 使用 winston logger 记录错误，会同时输出到控制台和文件
+  // 记录错误堆栈和请求上下文信息
+  logger.error(`${err.message}\n${err.stack}`, {
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('user-agent')
+  });
   
   // 返回错误响应
   // err.message 是错误的消息内容
