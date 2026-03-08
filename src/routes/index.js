@@ -39,6 +39,7 @@ const postInteractionRoutes = require('./post_interaction.routes');
 const adminRoutes = require('./admin.routes');
 const signInRoutes = require('./sign_in.routes');
 const resourceRoutes = require('./post_resource.routes');
+const aiRoutes = require('./ai.routes');
 // const deviceRoutes = require('./device.routes');  // 待实现
 // const otaRoutes = require('./ota.routes');        // 待实现
 
@@ -87,6 +88,9 @@ router.use('/sign-in', signInRoutes);
 
 // 资源兑换路由
 router.use('/', resourceRoutes);
+
+// AI聊天路由
+router.use('/ai', aiRoutes);
 
 // 设备相关路由（待实现）
 // router.use('/device', deviceRoutes);

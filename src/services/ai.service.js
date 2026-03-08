@@ -244,6 +244,23 @@ const generateReplyComment = async (postTitle, postContent, commentContent, comm
 };
 
 /**
+ * 通用聊天接口
+ * @description 支持多轮对话的通用聊天功能
+ * @param {string} message - 用户消息
+ * @param {Array} history - 历史对话记录 [{role: 'user'|'assistant', content: '...'}]
+ * @returns {Promise<string>} AI回复内容
+ */
+const chat = async (message, history = []) => {
+  const context = `你是论坛的AI助手，你的名字叫"AI助手"。
+你是论坛的管理员之一，负责帮助用户、维护论坛氛围。
+你的回复应该友好、有帮助、有建设性。
+你可以回答各种问题，帮助用户解决困难。
+回复长度控制在50-300字之间。`;
+
+  return await callAIWithRetry(message, context);
+};
+
+/**
  * 获取机器人用户ID
  * @returns {number} 机器人用户ID
  */
@@ -263,6 +280,7 @@ const init = async () => {
 module.exports = {
   generatePostComment,
   generateReplyComment,
+  chat,
   getBotUserId,
   init
 };

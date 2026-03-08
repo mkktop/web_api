@@ -38,6 +38,9 @@ const routes = require('./routes');
 // 错误处理中间件
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
+// AI服务
+const AIService = require('./services/ai.service');
+
 // 文件系统模块，用于操作文件和目录
 const fs = require('fs');
 
@@ -166,11 +169,25 @@ app.use(errorHandler);
  * 服务器启动后，会监听指定端口，等待客户端请求
  * 当有请求到达时，Express会依次执行中间件和路由处理函数
  */
-app.listen(config.port, () => {
-  // 服务器启动成功后记录日志
-  logger.info(`服务器运行在 http://localhost:${config.port}`);
-  logger.info(`环境: ${config.env}`);
-});
+// 启动服务器
+const startServer = async () => {
+  try {
+    // 初始化AI服务
+    await AIService.init();
+    
+    // 启动HTTP服务器
+    app.listen(config.port, () => {
+      // 服务器启动成功后记录日志
+      logger.info(`服务器运行在 http://localhost:${config.port}`);
+      logger.info(`环境: ${config.env}`);
+    });
+  } catch (error) {
+    logger.error('启动失败:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // 导出app实例，便于测试
 module.exports = app;

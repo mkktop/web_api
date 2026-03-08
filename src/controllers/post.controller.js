@@ -175,7 +175,9 @@ const create = async (req, res) => {
     // ==================== 触发AI自动评论 ====================
     setImmediate(async () => {
       try {
+        logger.info('开始AI自动评论流程...');
         const botUserId = AIService.getBotUserId();
+        logger.info(`机器人ID: ${botUserId}, 发帖者ID: ${userId}`);
         
         if (userId === botUserId) {
           logger.info('机器人发帖，跳过AI评论');
@@ -184,21 +186,29 @@ const create = async (req, res) => {
         
         const author = await User.findById(userId);
         const authorName = author ? (author.nickname || author.username) : '用户';
+        logger.info(`发帖者: ${authorName}`);
         
+        logger.info('调用AI生成评论...');
         const aiComment = await AIService.generatePostComment(title, content, authorName);
+        logger.info(`AI返回评论: ${aiComment ? '有内容' : '无内容'}`);
         
         if (aiComment) {
+          logger.info('创建评论...');
           await Comment.create({
             post_id: postId,
             user_id: botUserId,
             content: aiComment
           });
           
+          logger.info('更新评论数...');
           await Post.incrementComments(postId);
           logger.info(`AI自动评论成功: 帖子ID ${postId}`);
+        } else {
+          logger.info('AI未生成评论');
         }
       } catch (error) {
         logger.error('AI自动评论失败:', error.message);
+        logger.error('错误堆栈:', error.stack);
       }
     });
     
