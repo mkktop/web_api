@@ -8,21 +8,19 @@ const logger = require('../utils/logger');
 
 // AI API配置
 const AI_CONFIG = {
-  hostname: 'opencode.ai',
+  hostname: 'api.edgefn.net',
   port: 443,
-  basePath: '/zen/v1',
-  apiKey: 'sk-2VkbLll2uyWhcBduqKmTx0nq0uxttxoYUBelndI4HZ6duET8CPF7M0pR8wy5xfdn',
+  basePath: '/v1',
+  apiKey: 'sk-vpoecumURrtuOn4BD9742cFb10634b3dBa6973705cAeAd5f',
   botUserId: 4,
   maxRetries: 3,
   timeout: 30000,
   retryDelay: 5000
 };
 
-// 免费模型列表（优先级从高到低）
+// 模型列表
 let availableModels = [
-  'minimax-m2.5-free',
-  'trinity-large-preview-free',
-  'big-pickle'
+  'DeepSeek-R1-0528-Qwen3-8B'
 ];
 
 // 当前使用的模型索引
